@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockLens</title>
+  <link rel="stylesheet" href="css/token.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 헤더 -->
+  <header class="header">
+    <div class="header-left">
+      <span class="logo">StockLens</span>
+    </div>
+    <div class="header-center">
+      <div class="search-wrap">
+        <input type="text" id="searchInput" class="search-input" placeholder="종목명 또는 코드 검색...">
+        <ul id="searchResult" class="search-result hidden"></ul>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="market-tabs">
+        <button class="market-tab active" data-market="ALL">전체</button>
+        <button class="market-tab" data-market="KOSPI">코스피</button>
+        <button class="market-tab" data-market="KOSDAQ">코스닥</button>
+        <button class="market-tab" data-market="NASDAQ">나스닥</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 메인 레이아웃 -->
+  <div class="layout">
+
+    <!-- 사이드바 -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">관심 종목</div>
+        <ul id="watchlist" class="watchlist"></ul>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">최근 조회</div>
+        <ul id="recentList" class="watchlist"></ul>
+      </div>
+    </aside>
+
+    <!-- 차트 영역 -->
+    <main class="chart-area">
+
+      <!-- 종목 정보 바 -->
+      <div class="stock-info-bar" id="stockInfoBar">
+        <div class="stock-info-left">
+          <span class="stock-name" id="stockName">종목을 선택하세요</span>
+          <span class="stock-code" id="stockCode"></span>
+        </div>
+        <div class="stock-info-right">
+          <span class="stock-price" id="stockPrice">—</span>
+          <span class="stock-change" id="stockChange"></span>
+        </div>
+      </div>
+
+      <!-- 차트 컨트롤 -->
+      <div class="chart-controls">
+        <div class="period-tabs">
+          <button class="period-tab active" data-period="D">일</button>
+          <button class="period-tab" data-period="W">주</button>
+          <button class="period-tab" data-period="M">월</button>
+        </div>
+        <div class="ma-toggles">
+          <button class="ma-toggle active" data-ma="ma5" style="--ma-color: var(--chart-ma5)">MA5</button>
+          <button class="ma-toggle active" data-ma="ma20" style="--ma-color: var(--chart-ma20)">MA20</button>
+          <button class="ma-toggle active" data-ma="ma60" style="--ma-color: var(--chart-ma60)">MA60</button>
+          <button class="ma-toggle" data-ma="ma120" style="--ma-color: var(--chart-ma120)">MA120</button>
+        </div>
+      </div>
+
+      <!-- 메인 차트 -->
+      <div id="mainChart" class="chart-container"></div>
+
+      <!-- 거래량 차트 -->
+      <div id="volumeChart" class="chart-container volume"></div>
+
+      <!-- 서브 지표 탭 -->
+      <div class="indicator-tabs">
+        <button class="indicator-tab active" data-indicator="rsi">RSI</button>
+        <button class="indicator-tab" data-indicator="macd">MACD</button>
+        <button class="indicator-tab" data-indicator="bb">볼린저밴드</button>
+      </div>
+      <div id="subChart" class="chart-container sub"></div>
+
+    </main>
+  </div>
+
+  <!-- 하단 탭 네비게이션 (모바일) -->
+  <nav class="bottom-tab">
+    <button class="tab-item active" data-tab="chart">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>차트</span>
+    </button>
+    <button class="tab-item" data-tab="watchlist">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      <span>관심</span>
+    </button>
+    <button class="tab-item" data-tab="backtest">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      <span>백테스트</span>
+    </button>
+    <button class="tab-item" data-tab="portfolio">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span>포트폴리오</span>
+    </button>
+  </nav>
+
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

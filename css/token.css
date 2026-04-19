@@ -1,0 +1,77 @@
+/* ================================================
+   StockLens Design Tokens
+   Figma Tokens Studio → CSS Variables
+   ================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+:root {
+
+  /* 주가 색상 */
+  --color-up:      #4ade80;
+  --color-down:    #f87171;
+  --color-neutral: #94a3b8;
+
+  /* 배경 */
+  --bg-primary:    #0d0f14;
+  --bg-surface:    #13161e;
+  --bg-elevated:   #1a1e28;
+
+  /* 텍스트 */
+  --text-primary:   #e8eaf0;
+  --text-secondary: #7a7f92;
+  --text-disabled:  #3e4352;
+
+  /* 테두리 */
+  --border:         #1e2130;
+  --border-focus:   #378add;
+
+  /* 포인트 색상 */
+  --color-accent:   #4ade80;
+  --color-info:     #60a5fa;
+  --color-warning:  #f59e0b;
+
+  /* 폰트 */
+  --font-base: 'Noto Sans KR', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+
+  /* 폰트 크기 */
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 15px;
+  --text-lg:   18px;
+  --text-xl:   22px;
+
+  /* 폰트 굵기 */
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-bold:    700;
+
+  /* 스페이싱 */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  40px;
+  --space-2xl: 64px;
+
+  /* 보더 라디우스 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* 차트 전용 */
+  --chart-candle-up:     #4ade80;
+  --chart-candle-down:   #f87171;
+  --chart-volume-up:     rgba(74, 222, 128, 0.4);
+  --chart-volume-down:   rgba(248, 113, 113, 0.4);
+  --chart-ma5:           #60a5fa;
+  --chart-ma20:          #f59e0b;
+  --chart-ma60:          #c084fc;
+  --chart-ma120:         #fb923c;
+  --chart-bb:            rgba(148, 163, 184, 0.4);
+  --chart-grid:          rgba(255, 255, 255, 0.04);
+
+  /* 트랜지션 */
+  --transition: 0.2s ease;
+}

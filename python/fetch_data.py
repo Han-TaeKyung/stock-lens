@@ -4,6 +4,8 @@ import pandas as pd
 import ta
 import json, os
 from datetime import datetime, timedelta
+import math
+
 
 OUTPUT_DIR = 'data/ohlcv'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -37,35 +39,49 @@ def add_indicators(df):
     return df
 
 
+
+
 def save_ohlcv(code, df):
-    """DataFrame → JSON 저장"""
+    """DataFrame → JSON 저장 (NaN → null 처리)"""
     df = df.dropna(subset=['Open', 'High', 'Low', 'Close', 'Volume'])
     records = []
+    
+    def clean(val):
+        """NaN, inf → None으로 변환"""
+        if val is None:
+            return None
+        try:
+            f = float(val)
+            if math.isnan(f) or math.isinf(f):
+                return None
+            return round(f, 2)
+        except:
+            return None
+
     for date, row in df.iterrows():
         records.append({
             "date":        str(date)[:10],
-            "open":        round(float(row['Open']), 2),
-            "high":        round(float(row['High']), 2),
-            "low":         round(float(row['Low']), 2),
-            "close":       round(float(row['Close']), 2),
+            "open":        clean(row['Open']),
+            "high":        clean(row['High']),
+            "low":         clean(row['Low']),
+            "close":       clean(row['Close']),
             "volume":      int(row['Volume']),
-            "ma5":         row.get('ma5'),
-            "ma20":        row.get('ma20'),
-            "ma60":        row.get('ma60'),
-            "ma120":       row.get('ma120'),
-            "rsi":         row.get('rsi'),
-            "macd":        row.get('macd'),
-            "macd_signal": row.get('macd_signal'),
-            "macd_hist":   row.get('macd_hist'),
-            "bb_upper":    row.get('bb_upper'),
-            "bb_mid":      row.get('bb_mid'),
-            "bb_lower":    row.get('bb_lower'),
+            "ma5":         clean(row.get('ma5')),
+            "ma20":        clean(row.get('ma20')),
+            "ma60":        clean(row.get('ma60')),
+            "ma120":       clean(row.get('ma120')),
+            "rsi":         clean(row.get('rsi')),
+            "macd":        clean(row.get('macd')),
+            "macd_signal": clean(row.get('macd_signal')),
+            "macd_hist":   clean(row.get('macd_hist')),
+            "bb_upper":    clean(row.get('bb_upper')),
+            "bb_mid":      clean(row.get('bb_mid')),
+            "bb_lower":    clean(row.get('bb_lower')),
         })
 
     path = os.path.join(OUTPUT_DIR, f"{code}.json")
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(records, f, ensure_ascii=False)
-
 
 def fetch_domestic(codes):
     """국내 종목 수집 (FinanceDataReader)"""
