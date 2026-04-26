@@ -2,9 +2,8 @@ name: 📈 주가 데이터 자동 업데이트
 
 on:
   schedule:
-    # 평일(월~금) 한국시간 오후 6시 = UTC 09:00
     - cron: '0 9 * * 1-5'
-  workflow_dispatch: # 수동 실행 버튼도 활성화
+  workflow_dispatch:
 
 jobs:
   update-stock-data:
@@ -18,7 +17,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: 📦 패키지 설치
         run: |
