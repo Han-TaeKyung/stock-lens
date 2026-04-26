@@ -126,17 +126,22 @@ def fetch_foreign(tickers):
 
 
 if __name__ == '__main__':
-    # stocks.json 에서 종목 로드
     with open('data/stocks.json', 'r', encoding='utf-8') as f:
         stocks = json.load(f)
 
     domestic = [s['code'] for s in stocks if s['market'] in ('KOSPI', 'KOSDAQ')]
 
-    # 해외 주요 종목 (테스트용 10개 — 나중에 확장 가능)
-    foreign = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA',
-               'TSLA', 'META', 'NFLX', 'AMD', 'INTC']
+    # 해외 주요 종목
+    foreign = [
+        'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA',
+        'TSLA', 'META', 'NFLX', 'AMD', 'INTC',
+        'AAPL', 'JPM', 'V', 'WMT', 'JNJ'
+    ]
+    # 중복 제거
+    foreign = list(dict.fromkeys(foreign))
 
-    fetch_domestic(domestic[:20])   # 처음엔 20개만 테스트
+    # 전체 국내 종목 수집 (시간이 걸릴 수 있어요)
+    fetch_domestic(domestic)
     fetch_foreign(foreign)
 
     print(f"\n✅ 전체 완료 → data/ohlcv/ 폴더 확인")
