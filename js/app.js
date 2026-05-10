@@ -157,9 +157,50 @@ function renderChart(data) {
   state.charts.volChart.timeScale().fitContent();
   state.charts.subChart.timeScale().fitContent();
 
-  // ── 신호 데이터 로드 ──────────────────
-let signalData = null;
+  renderSignalMarkers(); 
 
+// ── 신호 데이터 로드 (종목별) ──────────
+async function loadSignals(code) {
+  try {
+    const res = await fetch(`data/signals/${code}.json`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (e) {
+    return [];
+  }
+}
+
+// ── 차트 위 매매 신호 마커 표시 ────────
+async function renderSignalMarkers() {
+  if (!state.currentCode) return;
+
+  const signals = await loadSignals(state.currentCode);
+  if (!signals.length) return;
+
+  const markerColors = {
+    buy:     '#4ade80',
+    sell:    '#f87171',
+    caution: '#f59e0b',
+  };
+  const markerShapes = {
+    buy:     'arrowUp',
+    sell:    'arrowDown',
+    caution: 'circle',
+  };
+
+  const markers = signals.map(s => ({
+    time:     s.date,
+    position: s.side === 'buy' ? 'belowBar' : s.side === 'sell' ? 'aboveBar' : 'inBar',
+    color:    markerColors[s.side] || '#94a3b8',
+    shape:    markerShapes[s.side] || 'circle',
+    text:     s.label,
+    size:     1.5,
+  }));
+
+  markers.sort((a, b) => a.time.localeCompare(b.time));
+  state.charts.candleSeries.setMarkers(markers);
+  renderSignalList(signals);
+}
 
   // 날짜 오름차순 정렬 (Lightweight Charts 요구사항)
   markers.sort((a, b) => a.time.localeCompare(b.time));
@@ -174,7 +215,6 @@ let signalData = null;
 function renderSignalList(signals) {
   let el = document.getElementById('signalList');
   if (!el) {
-    // 사이드바에 신호 섹션이 없으면 동적으로 생성
     const sidebar = document.querySelector('.sidebar');
     const section = document.createElement('div');
     section.className = 'sidebar-section';
@@ -191,28 +231,23 @@ function renderSignalList(signals) {
     return;
   }
 
-  // 최근 10개만 표시
   el.innerHTML = signals.slice(0, 10).map(s => {
-    const sideColor = s.side === 'buy'
+    const color = s.side === 'buy'
       ? 'var(--color-up)'
       : s.side === 'sell'
       ? 'var(--color-down)'
       : 'var(--color-warning)';
-    const sideText = s.side === 'buy' ? '▲' : s.side === 'sell' ? '▼' : '●';
-
+    const icon = s.side === 'buy' ? '▲' : s.side === 'sell' ? '▼' : '●';
     return `
       <li style="flex-direction:column;align-items:flex-start;gap:2px;padding:8px 16px;border-bottom:1px solid var(--border);">
-        <div style="display:flex;justify-content:space-between;width:100%;">
-          <span style="color:${sideColor};font-size:12px;font-family:var(--font-mono);">
-            ${sideText} ${s.label}
-          </span>
-        </div>
+        <span style="color:${color};font-size:12px;">${icon} ${s.label}</span>
         <span style="color:var(--text-disabled);font-size:11px;">${s.date}</span>
         <span style="color:var(--text-secondary);font-size:11px;">${s.desc || ''}</span>
       </li>
     `;
   }).join('');
 }
+
 
 // ── 서브 지표 차트 ────────────────────
 function renderSubChart(data, indicator) {
