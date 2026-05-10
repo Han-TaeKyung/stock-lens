@@ -12,6 +12,7 @@ const state = {
 // ── 초기화 ────────────────────────────
 async function init() {
   await loadStocks();
+  await loadSignals();
   initSearch();
   initMarketTabs();
   initPeriodTabs();
@@ -149,9 +150,106 @@ function renderChart(data) {
   // 서브 지표
   renderSubChart(data, state.activeIndicator);
 
+  // ── 매매 신호 마커 표시
+  renderSignalMarkers(data);
+
   mainChart.timeScale().fitContent();
   state.charts.volChart.timeScale().fitContent();
   state.charts.subChart.timeScale().fitContent();
+
+  // ── 신호 데이터 로드 ──────────────────
+let signalData = null;
+
+async function loadSignals() {
+  try {
+    const res = await fetch('data/signals.json');
+    signalData = await res.json();
+  } catch (e) {
+    console.warn('signals.json 로드 실패:', e);
+  }
+}
+
+// ── 차트 위 매매 신호 마커 표시 ────────
+function renderSignalMarkers(data) {
+  if (!signalData?.signals || !state.currentCode) return;
+
+  // 현재 종목의 신호만 필터링
+  const codeSignals = signalData.signals.filter(s => s.code === state.currentCode);
+  if (!codeSignals.length) return;
+
+  const markerColors = {
+    buy:     { color: '#4ade80', borderColor: '#166534', background: '#14532d' },
+    sell:    { color: '#f87171', borderColor: '#991b1b', background: '#450a0a' },
+    caution: { color: '#f59e0b', borderColor: '#92400e', background: '#451a03' },
+  };
+
+  const markerShapes = {
+    buy:     'arrowUp',
+    sell:    'arrowDown',
+    caution: 'circle',
+  };
+
+  const markers = codeSignals.map(s => ({
+    time:     s.date,
+    position: s.side === 'buy' ? 'belowBar' : s.side === 'sell' ? 'aboveBar' : 'inBar',
+    color:    markerColors[s.side]?.color || '#94a3b8',
+    shape:    markerShapes[s.side] || 'circle',
+    text:     s.label,
+    size:     1.5,
+  }));
+
+  // 날짜 오름차순 정렬 (Lightweight Charts 요구사항)
+  markers.sort((a, b) => a.time.localeCompare(b.time));
+
+  state.charts.candleSeries.setMarkers(markers);
+
+  // 사이드바 신호 목록 업데이트
+  renderSignalList(codeSignals);
+}
+
+// ── 사이드바 신호 목록 ────────────────
+function renderSignalList(signals) {
+  let el = document.getElementById('signalList');
+  if (!el) {
+    // 사이드바에 신호 섹션이 없으면 동적으로 생성
+    const sidebar = document.querySelector('.sidebar');
+    const section = document.createElement('div');
+    section.className = 'sidebar-section';
+    section.innerHTML = `
+      <div class="sidebar-title">최근 신호</div>
+      <ul id="signalList" class="watchlist"></ul>
+    `;
+    sidebar.appendChild(section);
+    el = document.getElementById('signalList');
+  }
+
+  if (!signals.length) {
+    el.innerHTML = '<li style="color:var(--text-disabled);font-size:12px;padding:8px 16px;">신호 없음</li>';
+    return;
+  }
+
+  // 최근 10개만 표시
+  el.innerHTML = signals.slice(0, 10).map(s => {
+    const sideColor = s.side === 'buy'
+      ? 'var(--color-up)'
+      : s.side === 'sell'
+      ? 'var(--color-down)'
+      : 'var(--color-warning)';
+    const sideText = s.side === 'buy' ? '▲' : s.side === 'sell' ? '▼' : '●';
+
+    return `
+      <li style="flex-direction:column;align-items:flex-start;gap:2px;padding:8px 16px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;width:100%;">
+          <span style="color:${sideColor};font-size:12px;font-family:var(--font-mono);">
+            ${sideText} ${s.label}
+          </span>
+        </div>
+        <span style="color:var(--text-disabled);font-size:11px;">${s.date}</span>
+        <span style="color:var(--text-secondary);font-size:11px;">${s.desc || ''}</span>
+      </li>
+    `;
+  }).join('');
+}
 }
 
 // ── 서브 지표 차트 ────────────────────
