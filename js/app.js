@@ -12,7 +12,6 @@ const state = {
 // ── 초기화 ────────────────────────────
 async function init() {
   await loadStocks();
-  //await loadSignals();
   initSearch();
   initMarketTabs();
   initPeriodTabs();
@@ -52,11 +51,10 @@ function makeChartOptions() {
 }
 
 function initCharts() {
-  const mainEl   = document.getElementById('mainChart');
-  const volEl    = document.getElementById('volumeChart');
-  const subEl    = document.getElementById('subChart');
+  const mainEl = document.getElementById('mainChart');
+  const volEl  = document.getElementById('volumeChart');
+  const subEl  = document.getElementById('subChart');
 
-  // 메인 차트
   const mainChart = LightweightCharts.createChart(mainEl, {
     ...makeChartOptions(),
     width: mainEl.clientWidth,
@@ -71,7 +69,6 @@ function initCharts() {
     }
   );
 
-  // 거래량 차트
   const volChart = LightweightCharts.createChart(volEl, {
     ...makeChartOptions(),
     width: volEl.clientWidth,
@@ -82,16 +79,20 @@ function initCharts() {
     { priceFormat: { type: 'volume' }, priceScaleId: '' }
   );
 
-  // 서브 차트 (RSI / MACD)
   const subChart = LightweightCharts.createChart(subEl, {
     ...makeChartOptions(),
     width: subEl.clientWidth,
     height: 120,
   });
 
-  state.charts = { mainChart, candleSeries, volChart, volSeries, subChart, subSeries: null, maSeries: {} };
+  state.charts = {
+    mainChart, candleSeries,
+    volChart, volSeries,
+    subChart, subSeries: null,
+    maSeries: {},
+    markerPrimitive: null,
+  };
 
-  // 크기 자동 조절
   new ResizeObserver(() => {
     mainChart.applyOptions({ width: mainEl.clientWidth, height: mainEl.clientHeight || 300 });
     volChart.applyOptions({ width: volEl.clientWidth });
@@ -150,14 +151,13 @@ function renderChart(data) {
   // 서브 지표
   renderSubChart(data, state.activeIndicator);
 
-  // ── 매매 신호 마커 표시
-  renderSignalMarkers(data);
-
   mainChart.timeScale().fitContent();
   state.charts.volChart.timeScale().fitContent();
   state.charts.subChart.timeScale().fitContent();
 
-  renderSignalMarkers(); 
+  // 매매 신호 마커
+  renderSignalMarkers();
+}
 
 // ── 신호 데이터 로드 (종목별) ──────────
 async function loadSignals(code) {
@@ -175,40 +175,42 @@ async function renderSignalMarkers() {
   if (!state.currentCode) return;
 
   const signals = await loadSignals(state.currentCode);
-  if (!signals.length) return;
 
-  const markerColors = {
-    buy:     '#4ade80',
-    sell:    '#f87171',
-    caution: '#f59e0b',
-  };
-  const markerShapes = {
-    buy:     'arrowUp',
-    sell:    'arrowDown',
-    caution: 'circle',
-  };
+  renderSignalList(signals);
+
+  if (!signals.length) return;
 
   const markers = signals.map(s => ({
     time:     s.date,
     position: s.side === 'buy' ? 'belowBar' : s.side === 'sell' ? 'aboveBar' : 'inBar',
-    color:    markerColors[s.side] || '#94a3b8',
-    shape:    markerShapes[s.side] || 'circle',
+    color:    s.side === 'buy' ? '#4ade80' : s.side === 'sell' ? '#f87171' : '#f59e0b',
+    shape:    s.side === 'buy' ? 'arrowUp'  : s.side === 'sell' ? 'arrowDown' : 'circle',
     text:     s.label,
     size:     1.5,
   }));
 
   markers.sort((a, b) => a.time.localeCompare(b.time));
-  state.charts.candleSeries.setMarkers(markers);
-  renderSignalList(signals);
-}
 
-  // 날짜 오름차순 정렬 (Lightweight Charts 요구사항)
-  markers.sort((a, b) => a.time.localeCompare(b.time));
+  // 기존 마커 제거
+  if (state.charts.markerPrimitive) {
+    try { state.charts.markerPrimitive.detach?.(); } catch(e) {}
+    state.charts.markerPrimitive = null;
+  }
 
-  state.charts.candleSeries.setMarkers(markers);
-
-  // 사이드바 신호 목록 업데이트
-  renderSignalList(codeSignals);
+  // Lightweight Charts v4 — createSeriesMarkers
+  try {
+    state.charts.markerPrimitive = LightweightCharts.createSeriesMarkers(
+      state.charts.candleSeries,
+      markers
+    );
+  } catch(e) {
+    // fallback: v4.1 이하
+    try {
+      state.charts.candleSeries.setMarkers(markers);
+    } catch(e2) {
+      console.warn('마커 표시 실패:', e2);
+    }
+  }
 }
 
 // ── 사이드바 신호 목록 ────────────────
@@ -248,7 +250,6 @@ function renderSignalList(signals) {
   }).join('');
 }
 
-
 // ── 서브 지표 차트 ────────────────────
 function renderSubChart(data, indicator) {
   const { subChart } = state.charts;
@@ -286,8 +287,8 @@ function renderSubChart(data, indicator) {
 // ── 종목 정보 바 ──────────────────────
 function updateStockInfo(data) {
   if (!data?.length) return;
-  const last = data[data.length - 1];
-  const prev = data[data.length - 2];
+  const last  = data[data.length - 1];
+  const prev  = data[data.length - 2];
   const stock = state.stocks.find(s => s.code === state.currentCode) || {};
 
   document.getElementById('stockName').textContent  = stock.name || state.currentCode;
@@ -311,7 +312,7 @@ function updateStockInfo(data) {
   }
 }
 
-// ── 관심 종목 추가/제거 버튼 ────────────
+// ── 관심 종목 추가/제거 버튼 ──────────
 function initWatchlistButton() {
   const bar = document.getElementById('stockInfoBar');
   const btn = document.createElement('button');
