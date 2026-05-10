@@ -7,6 +7,16 @@ const state = {
   activeIndicator: 'rsi',
   activeMarket: 'ALL',
   charts: {},
+  // ← 추가
+  activeSignals: new Set([
+    'golden_cross_5_20', 'golden_cross_20_60',
+    'dead_cross_5_20', 'dead_cross_20_60',
+    'pullback_ma20', 'pullback_ma60',
+    'rsi_oversold', 'rsi_overbought',
+    'disparity_ma5', 'disparity_ma20',
+    'bb_upper_break', 'bb_lower_break',
+    'ma60_breakdown'
+  ]),
 };
 
 // ── 초기화 ────────────────────────────
@@ -17,6 +27,7 @@ async function init() {
   initPeriodTabs();
   initMAToggles();
   initIndicatorTabs();
+  initSignalFilters();
   initCharts();
   initWatchlistButton();
   renderWatchlist();
@@ -176,11 +187,20 @@ async function renderSignalMarkers() {
 
   const signals = await loadSignals(state.currentCode);
 
-  renderSignalList(signals);
+  // ── 활성화된 신호 타입만 필터링 ──────
+  const filtered = signals.filter(s => state.activeSignals.has(s.type));
 
-  if (!signals.length) return;
+  renderSignalList(filtered);
 
-  const markers = signals.map(s => ({
+  // 기존 마커 제거
+  if (state.charts.markerPrimitive) {
+    try { state.charts.markerPrimitive.detach?.(); } catch(e) {}
+    state.charts.markerPrimitive = null;
+  }
+
+  if (!filtered.length) return;
+
+  const markers = filtered.map(s => ({
     time:     s.date,
     position: s.side === 'buy' ? 'belowBar' : s.side === 'sell' ? 'aboveBar' : 'inBar',
     color:    s.side === 'buy' ? '#4ade80' : s.side === 'sell' ? '#f87171' : '#f59e0b',
@@ -191,20 +211,12 @@ async function renderSignalMarkers() {
 
   markers.sort((a, b) => a.time.localeCompare(b.time));
 
-  // 기존 마커 제거
-  if (state.charts.markerPrimitive) {
-    try { state.charts.markerPrimitive.detach?.(); } catch(e) {}
-    state.charts.markerPrimitive = null;
-  }
-
-  // Lightweight Charts v4 — createSeriesMarkers
   try {
     state.charts.markerPrimitive = LightweightCharts.createSeriesMarkers(
       state.charts.candleSeries,
       markers
     );
   } catch(e) {
-    // fallback: v4.1 이하
     try {
       state.charts.candleSeries.setMarkers(markers);
     } catch(e2) {
@@ -464,6 +476,22 @@ function renderRecent() {
     li.addEventListener('click', () => loadStock(li.dataset.code))
   );
 }
-
+// ── 신호 필터 토글 ────────────────────
+function initSignalFilters() {
+  document.querySelectorAll('.signal-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.signal;
+      if (state.activeSignals.has(type)) {
+        state.activeSignals.delete(type);
+        btn.classList.remove('active');
+      } else {
+        state.activeSignals.add(type);
+        btn.classList.add('active');
+      }
+      // 현재 종목 마커 다시 그리기
+      if (state.currentCode) renderSignalMarkers();
+    });
+  });
+}
 // ── 시작 ──────────────────────────────
 init();
