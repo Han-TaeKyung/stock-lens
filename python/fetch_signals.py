@@ -156,41 +156,28 @@ def detect(code, data):
 
 
 def run():
-    all_signals = []
+    os.makedirs('data/signals', exist_ok=True)
+    
     files = [f for f in os.listdir(OHLCV_DIR) if f.endswith('.json')]
     print(f"총 {len(files)}개 종목 신호 탐지 중...")
 
+    total = 0
     for fname in files:
         code = fname.replace('.json', '')
         try:
             with open(os.path.join(OHLCV_DIR, fname), 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            all_signals.extend(detect(code, data))
+            signals = detect(code, data)
+            total += len(signals)
+
+            # 종목별로 저장
+            out_path = os.path.join('data/signals', f'{code}.json')
+            with open(out_path, 'w', encoding='utf-8') as f:
+                json.dump(signals, f, ensure_ascii=False)
         except Exception as e:
             print(f"  {code} 실패: {e}")
 
-    all_signals.sort(key=lambda x: x['date'], reverse=True)
-
-    cutoff = (datetime.today() - timedelta(days=SIGNAL_DAYS)).strftime('%Y-%m-%d')
-    latest = [s for s in all_signals if s['date'] >= cutoff]
-
-    from collections import Counter
-    counts = Counter(s['type'] for s in latest)
-
-    output = {
-        "updated_at": datetime.today().strftime('%Y-%m-%d %H:%M'),
-        "total_count": len(all_signals),
-        "latest_count": len(latest),
-        "type_counts": dict(counts),
-        "signals": latest
-    }
-
-    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-        json.dump(output, f, ensure_ascii=False)
-
-    print(f"\n✅ 완료 — 전체: {len(all_signals)}개 / 최근 {SIGNAL_DAYS}일: {len(latest)}개")
-    for t, cnt in counts.most_common():
-        print(f"  {t}: {cnt}개")
+    print(f"\n✅ 완료 — 전체: {total}개 신호 → data/signals/ 폴더")
 
 
 if __name__ == '__main__':

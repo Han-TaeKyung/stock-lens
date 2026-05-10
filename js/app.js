@@ -12,7 +12,7 @@ const state = {
 // ── 초기화 ────────────────────────────
 async function init() {
   await loadStocks();
-  await loadSignals();
+  //await loadSignals();
   initSearch();
   initMarketTabs();
   initPeriodTabs();
@@ -160,43 +160,6 @@ function renderChart(data) {
   // ── 신호 데이터 로드 ──────────────────
 let signalData = null;
 
-async function loadSignals() {
-  try {
-    const res = await fetch('data/signals.json');
-    signalData = await res.json();
-  } catch (e) {
-    console.warn('signals.json 로드 실패:', e);
-  }
-}
-
-// ── 차트 위 매매 신호 마커 표시 ────────
-function renderSignalMarkers(data) {
-  if (!signalData?.signals || !state.currentCode) return;
-
-  // 현재 종목의 신호만 필터링
-  const codeSignals = signalData.signals.filter(s => s.code === state.currentCode);
-  if (!codeSignals.length) return;
-
-  const markerColors = {
-    buy:     { color: '#4ade80', borderColor: '#166534', background: '#14532d' },
-    sell:    { color: '#f87171', borderColor: '#991b1b', background: '#450a0a' },
-    caution: { color: '#f59e0b', borderColor: '#92400e', background: '#451a03' },
-  };
-
-  const markerShapes = {
-    buy:     'arrowUp',
-    sell:    'arrowDown',
-    caution: 'circle',
-  };
-
-  const markers = codeSignals.map(s => ({
-    time:     s.date,
-    position: s.side === 'buy' ? 'belowBar' : s.side === 'sell' ? 'aboveBar' : 'inBar',
-    color:    markerColors[s.side]?.color || '#94a3b8',
-    shape:    markerShapes[s.side] || 'circle',
-    text:     s.label,
-    size:     1.5,
-  }));
 
   // 날짜 오름차순 정렬 (Lightweight Charts 요구사항)
   markers.sort((a, b) => a.time.localeCompare(b.time));
@@ -249,7 +212,6 @@ function renderSignalList(signals) {
       </li>
     `;
   }).join('');
-}
 }
 
 // ── 서브 지표 차트 ────────────────────
