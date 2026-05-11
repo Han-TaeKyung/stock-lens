@@ -1,1 +1,1 @@
-[{"code": "458350", "date": "2026-04-09", "side": "caution", "type": "disparity_ma5", "label": "이격도 과다 MA5 (112.21%)", "desc": "5일선 대비 112.21% — 과열 구간, 신규 매수 자제", "price": 10200.0}]
+[{"code": "458350", "date": "2026-04-09", "side": "caution", "type": "disparity_ma5", "label": "이격도 과다 MA5 (112.21%)", "desc": "5일선 대비 112.21% — 과열 구간, 신규 매수 자제", "price": 10200.0}, {"code": "458350", "date": "2026-05-11", "side": "buy", "type": "bb_lower_break", "label": "볼린저 하단 이탈", "desc": "볼린저밴드 하단 이탈 — 단기 반등 가능", "price": 8150.0}]
