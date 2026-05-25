@@ -106,6 +106,55 @@
       <div id="subChart" class="chart-container sub"></div>
 
     </main>
+
+    <!-- ── 신호 요약 패널 (새로 추가) ── -->
+    <aside class="signal-panel" id="signalPanel">
+      <div class="sp-header">
+        <span class="sp-title">신호 분석</span>
+        <span class="sp-updated" id="spUpdated">—</span>
+      </div>
+
+      <!-- 매수/매도 강도 게이지 -->
+      <div class="sp-gauge-wrap">
+        <div class="sp-gauge-item">
+          <div class="sp-gauge-label">
+            <span style="color:var(--color-up)">▲ 매수</span>
+            <span class="sp-gauge-score" id="buyScore">0</span>
+          </div>
+          <div class="sp-gauge-bar">
+            <div class="sp-gauge-fill buy" id="buyBar" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="sp-gauge-item">
+          <div class="sp-gauge-label">
+            <span style="color:var(--color-down)">▼ 매도</span>
+            <span class="sp-gauge-score" id="sellScore">0</span>
+          </div>
+          <div class="sp-gauge-bar">
+            <div class="sp-gauge-fill sell" id="sellBar" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="sp-gauge-item">
+          <div class="sp-gauge-label">
+            <span style="color:var(--color-warning)">● 주의</span>
+            <span class="sp-gauge-score" id="cautionScore">0</span>
+          </div>
+          <div class="sp-gauge-bar">
+            <div class="sp-gauge-fill caution" id="cautionBar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 종합 판단 -->
+      <div class="sp-verdict" id="spVerdict">
+        <span class="sp-verdict-label">종합 판단</span>
+        <span class="sp-verdict-value" id="spVerdictValue">—</span>
+      </div>
+
+      <!-- 최근 신호 목록 -->
+      <div class="sp-section-title">최근 신호</div>
+      <ul class="sp-signal-list" id="spSignalList"></ul>
+    </aside>
   </div>
 
   <!-- 하단 탭 네비게이션 (모바일) -->

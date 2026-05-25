@@ -271,3 +271,113 @@ body {
   color: var(--sc);
   background: color-mix(in srgb, var(--sc) 10%, transparent);
 }
+
+/* ── 신호 요약 패널 ── */
+.signal-panel {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: var(--space-md);
+  gap: var(--space-md);
+}
+.sp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sp-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.sp-updated {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-disabled);
+}
+.sp-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.sp-gauge-item { display: flex; flex-direction: column; gap: 4px; }
+.sp-gauge-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+}
+.sp-gauge-score { color: var(--text-primary); font-weight: var(--weight-bold); }
+.sp-gauge-bar {
+  height: 6px;
+  background: var(--bg-elevated);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.sp-gauge-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.sp-gauge-fill.buy     { background: var(--color-up); }
+.sp-gauge-fill.sell    { background: var(--color-down); }
+.sp-gauge-fill.caution { background: var(--color-warning); }
+
+.sp-verdict {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  border: 1px solid var(--border);
+}
+.sp-verdict-label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+.sp-verdict-value {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
+}
+.sp-verdict-value.buy     { color: var(--color-up); }
+.sp-verdict-value.sell    { color: var(--color-down); }
+.sp-verdict-value.caution { color: var(--color-warning); }
+.sp-verdict-value.neutral { color: var(--text-secondary); }
+
+.sp-section-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-disabled);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--border);
+}
+.sp-signal-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.sp-signal-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sp-signal-list li:last-child { border-bottom: none; }
+.sp-signal-date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-disabled);
+}
+.sp-signal-label { font-size: 12px; }
+.sp-signal-desc  { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+
+@media (max-width: 1280px) { .signal-panel { display: none; } }

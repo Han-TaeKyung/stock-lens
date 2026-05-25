@@ -225,27 +225,50 @@ async function renderSignalMarkers() {
   }
 }
 
-// ── 사이드바 신호 목록 ────────────────
-function renderSignalList(signals) {
-  let el = document.getElementById('signalList');
-  if (!el) {
-    const sidebar = document.querySelector('.sidebar');
-    const section = document.createElement('div');
-    section.className = 'sidebar-section';
-    section.innerHTML = `
-      <div class="sidebar-title">최근 신호</div>
-      <ul id="signalList" class="watchlist"></ul>
-    `;
-    sidebar.appendChild(section);
-    el = document.getElementById('signalList');
-  }
+// ── 신호 요약 패널 업데이트 ────────────
+function updateSignalPanel(signals) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const recent = signals.filter(s => s.date >= cutoffStr);
 
-  if (!signals.length) {
-    el.innerHTML = '<li style="color:var(--text-disabled);font-size:12px;padding:8px 16px;">신호 없음</li>';
+  const buy     = recent.filter(s => s.side === 'buy').length;
+  const sell    = recent.filter(s => s.side === 'sell').length;
+  const caution = recent.filter(s => s.side === 'caution').length;
+  const total   = buy + sell + caution || 1;
+
+  document.getElementById('buyScore').textContent     = buy;
+  document.getElementById('sellScore').textContent    = sell;
+  document.getElementById('cautionScore').textContent = caution;
+  document.getElementById('buyBar').style.width       = `${Math.round(buy / total * 100)}%`;
+  document.getElementById('sellBar').style.width      = `${Math.round(sell / total * 100)}%`;
+  document.getElementById('cautionBar').style.width   = `${Math.round(caution / total * 100)}%`;
+
+  document.getElementById('spUpdated').textContent = '최근 30일';
+
+  const verdictEl = document.getElementById('spVerdictValue');
+  const score = buy - sell;
+  let verdict, cls;
+  if      (score >= 4)  { verdict = '강한 매수 🔥'; cls = 'buy'; }
+  else if (score >= 2)  { verdict = '매수 우세 ▲';  cls = 'buy'; }
+  else if (score >= 1)  { verdict = '약한 매수 ↑';  cls = 'buy'; }
+  else if (score <= -4) { verdict = '강한 매도 ❄️'; cls = 'sell'; }
+  else if (score <= -2) { verdict = '매도 우세 ▼';  cls = 'sell'; }
+  else if (score <= -1) { verdict = '약한 매도 ↓';  cls = 'sell'; }
+  else if (caution > 2) { verdict = '과열 주의 ⚠️'; cls = 'caution'; }
+  else                  { verdict = '중립 —';        cls = 'neutral'; }
+  verdictEl.textContent = verdict;
+  verdictEl.className   = `sp-verdict-value ${cls}`;
+
+  const listEl = document.getElementById('spSignalList');
+  const latest = [...signals].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
+
+  if (!latest.length) {
+    listEl.innerHTML = '<li style="color:var(--text-disabled);font-size:12px;">신호 없음</li>';
     return;
   }
 
-  el.innerHTML = signals.slice(0, 10).map(s => {
+  listEl.innerHTML = latest.map(s => {
     const color = s.side === 'buy'
       ? 'var(--color-up)'
       : s.side === 'sell'
@@ -253,13 +276,18 @@ function renderSignalList(signals) {
       : 'var(--color-warning)';
     const icon = s.side === 'buy' ? '▲' : s.side === 'sell' ? '▼' : '●';
     return `
-      <li style="flex-direction:column;align-items:flex-start;gap:2px;padding:8px 16px;border-bottom:1px solid var(--border);">
-        <span style="color:${color};font-size:12px;">${icon} ${s.label}</span>
-        <span style="color:var(--text-disabled);font-size:11px;">${s.date}</span>
-        <span style="color:var(--text-secondary);font-size:11px;">${s.desc || ''}</span>
+      <li>
+        <span class="sp-signal-label" style="color:${color}">${icon} ${s.label}</span>
+        <span class="sp-signal-date">${s.date}</span>
+        <span class="sp-signal-desc">${s.desc || ''}</span>
       </li>
     `;
   }).join('');
+}
+
+// ── 사이드바 신호 목록 ────────────────
+function renderSignalList(signals) {
+  updateSignalPanel(signals);
 }
 
 // ── 서브 지표 차트 ────────────────────
