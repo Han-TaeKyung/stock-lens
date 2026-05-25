@@ -27,6 +27,10 @@
         <button class="market-tab" data-market="KOSDAQ">코스닥</button>
         <button class="market-tab" data-market="NASDAQ">나스닥</button>
       </div>
+      <div class="page-tabs">
+        <button class="page-tab active" data-tab="chart">차트</button>
+        <button class="page-tab" data-tab="backtest">백테스트</button>
+      </div>
     </div>
   </header>
 
@@ -155,6 +159,75 @@
       <div class="sp-section-title">최근 신호</div>
       <ul class="sp-signal-list" id="spSignalList"></ul>
     </aside>
+  </div>
+
+  <!-- 백테스팅 화면 (기본 숨김) -->
+  <div class="page hidden" id="page-backtest">
+    <div class="bt-wrap">
+
+      <!-- 전략 설정 패널 -->
+      <div class="bt-config">
+        <div class="bt-config-title">전략 설정</div>
+
+        <div class="bt-form-group">
+          <label>종목</label>
+          <div class="search-wrap">
+            <input type="text" id="btSearchInput" class="search-input" placeholder="종목명 또는 코드...">
+            <ul id="btSearchResult" class="search-result hidden"></ul>
+          </div>
+          <span class="bt-selected-stock" id="btSelectedStock">선택 안됨</span>
+        </div>
+
+        <div class="bt-form-group">
+          <label>매수 전략</label>
+          <select id="btBuyStrategy" class="bt-select">
+            <option value="golden_cross_5_20">골든크로스 (MA5×MA20)</option>
+            <option value="golden_cross_20_60">골든크로스 (MA20×MA60)</option>
+            <option value="pullback_ma20">눌림목 (20일선 반등)</option>
+            <option value="pullback_ma60">눌림목 (60일선 반등)</option>
+            <option value="rsi_oversold">RSI 과매도 탈출</option>
+            <option value="bb_lower_break">볼린저 하단 이탈</option>
+          </select>
+        </div>
+
+        <div class="bt-form-group">
+          <label>매도 전략</label>
+          <select id="btSellStrategy" class="bt-select">
+            <option value="dead_cross_5_20">데드크로스 (MA5×MA20)</option>
+            <option value="dead_cross_20_60">데드크로스 (MA20×MA60)</option>
+            <option value="rsi_overbought">RSI 과매수 탈출</option>
+            <option value="bb_upper_break">볼린저 상단 돌파</option>
+            <option value="ma60_breakdown">60일선 이탈</option>
+          </select>
+        </div>
+
+        <div class="bt-form-row">
+          <div class="bt-form-group">
+            <label>시작일</label>
+            <input type="date" id="btStartDate" class="bt-input">
+          </div>
+          <div class="bt-form-group">
+            <label>종료일</label>
+            <input type="date" id="btEndDate" class="bt-input">
+          </div>
+        </div>
+
+        <div class="bt-form-group">
+          <label>초기 투자금 (원)</label>
+          <input type="number" id="btInitCash" class="bt-input" value="10000000" step="1000000">
+        </div>
+
+        <button id="btRunBtn" class="bt-run-btn">▶ 백테스팅 실행</button>
+      </div>
+
+      <!-- 결과 패널 -->
+      <div class="bt-result" id="btResult">
+        <div class="bt-result-empty">
+          <span>종목과 전략을 선택하고<br>백테스팅을 실행하세요</span>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <!-- 하단 탭 네비게이션 (모바일) -->
