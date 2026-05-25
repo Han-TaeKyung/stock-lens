@@ -36,6 +36,7 @@ async function init() {
   await loadStocks();
   initTabs();
   initBacktest();
+  initPortfolio(); 
   initSearch();
   initMarketTabs();
   initPeriodTabs();
@@ -63,31 +64,29 @@ async function loadStocks() {
 // ════════════════════════════════════════
 
 function initTabs() {
-  // 하단 탭 + 상단 페이지 탭 모두 처리
   document.querySelectorAll('.tab-item, .page-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab;
 
-      // 같은 data-tab 가진 모든 버튼 active 처리
       document.querySelectorAll('.tab-item, .page-tab').forEach(b => {
         if (b.dataset.tab === tab) b.classList.add('active');
         else b.classList.remove('active');
       });
 
-      const layout   = document.querySelector('.layout');
-      const backtest = document.getElementById('page-backtest');
+      const layout    = document.querySelector('.layout');
+      const backtest  = document.getElementById('page-backtest');
+      const portfolio = document.getElementById('page-portfolio');
 
-      if (tab === 'chart') {
-        layout.classList.remove('hidden');
-        backtest.classList.add('hidden');
-      } else if (tab === 'backtest') {
-        layout.classList.add('hidden');
-        backtest.classList.remove('hidden');
-      }
+      layout.classList.add('hidden');
+      backtest.classList.add('hidden');
+      portfolio.classList.add('hidden');
+
+      if (tab === 'chart')     layout.classList.remove('hidden');
+      if (tab === 'backtest')  backtest.classList.remove('hidden');
+      if (tab === 'portfolio') portfolio.classList.remove('hidden');
     });
   });
 }
-
 
 // ════════════════════════════════════════
 //  차트 초기화
@@ -766,7 +765,225 @@ function renderBacktestResult(r) {
   equitySeries.setData(r.equity.map(e => ({ time: e.date, value: e.value })));
   btChart.timeScale().fitContent();
 }
+// ════════════════════════════════════════
+//  포트폴리오
+// ════════════════════════════════════════
 
+let pfCode    = null;
+let pfHoldings = [];  // { code, name, buyPrice, shares, buyDate }
+let pfDonut   = null;
+
+const PF_COLORS = ['#4ade80','#60a5fa','#f59e0b','#c084fc','#fb923c','#f87171','#34d399','#818cf8'];
+
+function initPortfolio() {
+  pfHoldings = JSON.parse(localStorage.getItem('portfolio') || '[]');
+
+  // 종목 추가 버튼
+  document.getElementById('pfAddBtn').addEventListener('click', () => {
+    document.getElementById('pfForm').classList.toggle('hidden');
+  });
+
+  // 취소 버튼
+  document.getElementById('pfCancelBtn').addEventListener('click', () => {
+    document.getElementById('pfForm').classList.add('hidden');
+    resetPfForm();
+  });
+
+  // 종목 검색
+  const input  = document.getElementById('pfSearchInput');
+  const result = document.getElementById('pfSearchResult');
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { result.classList.add('hidden'); return; }
+    const filtered = state.stocks
+      .filter(s => s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q))
+      .slice(0, 10);
+    result.innerHTML = filtered.map(s =>
+      `<li data-code="${s.code}"><span>${s.name}</span><span class="code">${s.code}</span></li>`
+    ).join('');
+    result.classList.toggle('hidden', !filtered.length);
+  });
+
+  result.addEventListener('click', e => {
+    const li = e.target.closest('li');
+    if (!li) return;
+    pfCode = li.dataset.code;
+    const stock = state.stocks.find(s => s.code === pfCode) || {};
+    document.getElementById('pfSelectedStock').textContent = `${stock.name || pfCode} (${pfCode})`;
+    input.value = '';
+    result.classList.add('hidden');
+  });
+
+  // 저장 버튼
+  document.getElementById('pfSaveBtn').addEventListener('click', savePfHolding);
+
+  // 날짜 기본값
+  document.getElementById('pfBuyDate').value = new Date().toISOString().slice(0, 10);
+
+  renderPortfolio();
+}
+
+function resetPfForm() {
+  pfCode = null;
+  document.getElementById('pfSelectedStock').textContent = '선택 안됨';
+  document.getElementById('pfSearchInput').value = '';
+  document.getElementById('pfBuyPrice').value = '';
+  document.getElementById('pfShares').value = '';
+  document.getElementById('pfBuyDate').value = new Date().toISOString().slice(0, 10);
+}
+
+async function savePfHolding() {
+  if (!pfCode) { alert('종목을 선택해주세요.'); return; }
+  const buyPrice = Number(document.getElementById('pfBuyPrice').value);
+  const shares   = Number(document.getElementById('pfShares').value);
+  const buyDate  = document.getElementById('pfBuyDate').value;
+  if (!buyPrice || !shares) { alert('매수가와 수량을 입력해주세요.'); return; }
+
+  const stock = state.stocks.find(s => s.code === pfCode) || {};
+
+  // 현재가 가져오기
+  let currentPrice = buyPrice;
+  try {
+    const res = await fetch(`data/ohlcv/${pfCode}.json`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.length) currentPrice = data[data.length - 1].close;
+    }
+  } catch(e) {}
+
+  pfHoldings.push({ code: pfCode, name: stock.name || pfCode, buyPrice, shares, buyDate, currentPrice });
+  localStorage.setItem('portfolio', JSON.stringify(pfHoldings));
+
+  document.getElementById('pfForm').classList.add('hidden');
+  resetPfForm();
+  renderPortfolio();
+}
+
+function renderPortfolio() {
+  const tbody   = document.getElementById('pfTableBody');
+  const emptyRow = document.getElementById('pfEmptyRow');
+
+  if (!pfHoldings.length) {
+    tbody.innerHTML = `
+      <tr id="pfEmptyRow">
+        <td colspan="10" style="text-align:center;color:var(--text-disabled);padding:40px;">
+          보유 종목을 추가해주세요
+        </td>
+      </tr>`;
+    updatePfSummary(0, 0);
+    renderPfDonut([]);
+    return;
+  }
+
+  let totalBuy = 0, totalEval = 0;
+
+  tbody.innerHTML = pfHoldings.map((h, i) => {
+    const buyAmt  = h.buyPrice * h.shares;
+    const evalAmt = h.currentPrice * h.shares;
+    const profit  = evalAmt - buyAmt;
+    const pct     = ((profit / buyAmt) * 100).toFixed(2);
+    totalBuy  += buyAmt;
+    totalEval += evalAmt;
+
+    const profitColor = profit >= 0 ? 'var(--color-up)' : 'var(--color-down)';
+
+    return `
+      <tr>
+        <td>${h.name}</td>
+        <td style="color:var(--text-secondary);font-size:11px;">${h.code}</td>
+        <td>${h.buyPrice.toLocaleString()}</td>
+        <td>${h.currentPrice.toLocaleString()}</td>
+        <td>${h.shares.toLocaleString()}</td>
+        <td>${buyAmt.toLocaleString()}</td>
+        <td>${evalAmt.toLocaleString()}</td>
+        <td style="color:${profitColor}">${profit >= 0 ? '+' : ''}${Math.round(profit).toLocaleString()}</td>
+        <td style="color:${profitColor}">${profit >= 0 ? '+' : ''}${pct}%</td>
+        <td><button class="pf-delete-btn" data-index="${i}">✕</button></td>
+      </tr>
+    `;
+  }).join('');
+
+  // 삭제 버튼 이벤트
+  tbody.querySelectorAll('.pf-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      pfHoldings.splice(Number(btn.dataset.index), 1);
+      localStorage.setItem('portfolio', JSON.stringify(pfHoldings));
+      renderPortfolio();
+    });
+  });
+
+  updatePfSummary(totalBuy, totalEval);
+  renderPfDonut(pfHoldings, totalEval);
+}
+
+function updatePfSummary(totalBuy, totalEval) {
+  const profit = totalEval - totalBuy;
+  const pct    = totalBuy > 0 ? ((profit / totalBuy) * 100).toFixed(2) : 0;
+
+  document.getElementById('pfTotalBuy').textContent   = totalBuy  > 0 ? totalBuy.toLocaleString()  + '원' : '—';
+  document.getElementById('pfTotalEval').textContent  = totalEval > 0 ? totalEval.toLocaleString() + '원' : '—';
+
+  const profitEl  = document.getElementById('pfTotalProfit');
+  const returnEl  = document.getElementById('pfTotalReturn');
+
+  if (totalBuy > 0) {
+    profitEl.textContent  = (profit >= 0 ? '+' : '') + Math.round(profit).toLocaleString() + '원';
+    profitEl.className    = 'pf-summary-value ' + (profit >= 0 ? 'positive' : 'negative');
+    returnEl.textContent  = (pct >= 0 ? '+' : '') + pct + '%';
+    returnEl.className    = 'pf-summary-value ' + (pct >= 0 ? 'positive' : 'negative');
+  } else {
+    profitEl.textContent = '—';
+    returnEl.textContent = '—';
+    profitEl.className   = 'pf-summary-value';
+    returnEl.className   = 'pf-summary-value';
+  }
+}
+
+function renderPfDonut(holdings, totalEval = 0) {
+  const canvas  = document.getElementById('pfDonutChart');
+  const legendEl = document.getElementById('pfLegend');
+  const ctx     = canvas.getContext('2d');
+
+  ctx.clearRect(0, 0, 200, 200);
+  legendEl.innerHTML = '';
+
+  if (!holdings.length || totalEval === 0) {
+    // 빈 도넛
+    ctx.beginPath();
+    ctx.arc(100, 100, 80, 0, Math.PI * 2);
+    ctx.strokeStyle = '#1e2130';
+    ctx.lineWidth = 30;
+    ctx.stroke();
+    return;
+  }
+
+  let startAngle = -Math.PI / 2;
+
+  holdings.forEach((h, i) => {
+    const evalAmt = h.currentPrice * h.shares;
+    const ratio   = evalAmt / totalEval;
+    const endAngle = startAngle + ratio * Math.PI * 2;
+    const color   = PF_COLORS[i % PF_COLORS.length];
+
+    ctx.beginPath();
+    ctx.arc(100, 100, 80, startAngle, endAngle);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 30;
+    ctx.stroke();
+
+    startAngle = endAngle;
+
+    // 범례
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span class="pf-legend-dot" style="background:${color}"></span>
+      <span>${h.name}</span>
+      <span style="margin-left:auto;color:var(--text-secondary)">${(ratio * 100).toFixed(1)}%</span>
+    `;
+    legendEl.appendChild(li);
+  });
+}
 
 // ── 시작 ──────────────────────────────
 init();

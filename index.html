@@ -27,9 +27,10 @@
         <button class="market-tab" data-market="KOSDAQ">코스닥</button>
         <button class="market-tab" data-market="NASDAQ">나스닥</button>
       </div>
-      <div class="page-tabs">
+     <div class="page-tabs">
         <button class="page-tab active" data-tab="chart">차트</button>
         <button class="page-tab" data-tab="backtest">백테스트</button>
+        <button class="page-tab" data-tab="portfolio">포트폴리오</button>
       </div>
     </div>
   </header>
@@ -229,6 +230,110 @@
 
     </div>
   </div>
+  <!-- 백테스팅 끝 -->
+   <!-- 포트폴리오 화면 -->
+<div class="page hidden" id="page-portfolio">
+  <div class="pf-wrap">
+
+    <!-- 요약 카드 -->
+    <div class="pf-summary" id="pfSummary">
+      <div class="pf-summary-card">
+        <span class="pf-summary-label">총 매수금액</span>
+        <span class="pf-summary-value" id="pfTotalBuy">—</span>
+      </div>
+      <div class="pf-summary-card">
+        <span class="pf-summary-label">총 평가금액</span>
+        <span class="pf-summary-value" id="pfTotalEval">—</span>
+      </div>
+      <div class="pf-summary-card">
+        <span class="pf-summary-label">총 손익</span>
+        <span class="pf-summary-value" id="pfTotalProfit">—</span>
+      </div>
+      <div class="pf-summary-card">
+        <span class="pf-summary-label">수익률</span>
+        <span class="pf-summary-value" id="pfTotalReturn">—</span>
+      </div>
+    </div>
+
+    <div class="pf-body">
+
+      <!-- 보유 종목 테이블 -->
+      <div class="pf-table-wrap">
+        <div class="pf-table-header">
+          <span class="pf-table-title">보유 종목</span>
+          <button class="pf-add-btn" id="pfAddBtn">+ 종목 추가</button>
+        </div>
+
+        <!-- 종목 추가 폼 (기본 숨김) -->
+        <div class="pf-form hidden" id="pfForm">
+          <div class="pf-form-inner">
+            <div class="pf-form-group">
+              <label>종목</label>
+              <div class="search-wrap">
+                <input type="text" id="pfSearchInput" class="search-input" placeholder="종목명 또는 코드...">
+                <ul id="pfSearchResult" class="search-result hidden"></ul>
+              </div>
+              <span class="bt-selected-stock" id="pfSelectedStock">선택 안됨</span>
+            </div>
+            <div class="pf-form-row">
+              <div class="pf-form-group">
+                <label>매수가 (원)</label>
+                <input type="number" id="pfBuyPrice" class="bt-input" placeholder="0">
+              </div>
+              <div class="pf-form-group">
+                <label>보유 수량</label>
+                <input type="number" id="pfShares" class="bt-input" placeholder="0">
+              </div>
+              <div class="pf-form-group">
+                <label>매수일</label>
+                <input type="date" id="pfBuyDate" class="bt-input">
+              </div>
+            </div>
+            <div class="pf-form-actions">
+              <button class="pf-save-btn" id="pfSaveBtn">저장</button>
+              <button class="pf-cancel-btn" id="pfCancelBtn">취소</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 테이블 -->
+        <table class="pf-table" id="pfTable">
+          <thead>
+            <tr>
+              <th>종목명</th>
+              <th>코드</th>
+              <th>매수가</th>
+              <th>현재가</th>
+              <th>수량</th>
+              <th>매수금액</th>
+              <th>평가금액</th>
+              <th>손익</th>
+              <th>수익률</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="pfTableBody">
+            <tr id="pfEmptyRow">
+              <td colspan="10" style="text-align:center;color:var(--text-disabled);padding:40px;">
+                보유 종목을 추가해주세요
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 비중 차트 -->
+      <div class="pf-chart-wrap">
+        <div class="pf-chart-title">포트폴리오 비중</div>
+        <div class="pf-donut-wrap">
+          <canvas id="pfDonutChart" width="200" height="200"></canvas>
+        </div>
+        <ul class="pf-legend" id="pfLegend"></ul>
+      </div>
+
+    </div>
+  </div>
+</div>
 
   <!-- 하단 탭 네비게이션 (모바일) -->
   <nav class="bottom-tab">
