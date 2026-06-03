@@ -1,8 +1,7 @@
 // ════════════════════════════════════════
-//  StockLens — app.js
+//  StockLens — app.js (복구 버전 2026-06-03)
 // ════════════════════════════════════════
 
-// ── 상태 ──────────────────────────────
 const state = {
   stocks: [],
   currentCode: null,
@@ -10,6 +9,7 @@ const state = {
   activeMA: new Set(['ma5', 'ma20', 'ma60']),
   activeIndicator: 'rsi',
   activeMarket: 'ALL',
+  activePeriod: 'D',
   charts: {},
   activeSignals: new Set([
     'golden_cross_5_20', 'golden_cross_20_60',
@@ -22,10 +22,14 @@ const state = {
   ]),
 };
 
-// ── 백테스팅 전역 변수 ────────────────
 let btCode    = null;
 let btOhlcv   = null;
 let btSignals = null;
+let pfCode    = null;
+let pfHoldings = [];
+let pfDonut   = null;
+
+const PF_COLORS = ['#4ade80','#60a5fa','#f59e0b','#c084fc','#fb923c','#f87171','#34d399','#818cf8'];
 
 
 // ════════════════════════════════════════
@@ -36,7 +40,7 @@ async function init() {
   await loadStocks();
   initTabs();
   initBacktest();
-  initPortfolio(); 
+  initPortfolio();
   initSearch();
   initMarketTabs();
   initPeriodTabs();
@@ -87,6 +91,7 @@ function initTabs() {
     });
   });
 }
+
 
 // ════════════════════════════════════════
 //  차트 초기화
@@ -155,6 +160,46 @@ function initCharts() {
 
 
 // ════════════════════════════════════════
+//  봉 집계 함수
+// ════════════════════════════════════════
+
+function aggregateData(data, period) {
+  if (period === 'D') return data;
+
+  const groups = {};
+
+  for (const d of data) {
+    const date = new Date(d.date);
+    let key;
+
+    if (period === 'W') {
+      const day  = date.getDay();
+      const diff = (day === 0 ? -6 : 1 - day);
+      const monday = new Date(date);
+      monday.setDate(date.getDate() + diff);
+      key = monday.toISOString().slice(0, 10);
+    } else if (period === 'M') {
+      key = `${d.date.slice(0, 7)}-01`;
+    }
+
+    if (!groups[key]) {
+      groups[key] = {
+        date: key, open: d.open, high: d.high,
+        low: d.low, close: d.close, volume: d.volume,
+      };
+    } else {
+      groups[key].high   = Math.max(groups[key].high, d.high);
+      groups[key].low    = Math.min(groups[key].low,  d.low);
+      groups[key].close  = d.close;
+      groups[key].volume += d.volume;
+    }
+  }
+
+  return Object.values(groups).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+
+// ════════════════════════════════════════
 //  종목 데이터 로드 & 차트 렌더
 // ════════════════════════════════════════
 
@@ -178,7 +223,10 @@ function renderChart(data) {
   if (!data?.length) return;
   const { mainChart, candleSeries, volSeries, maSeries } = state.charts;
 
-  candleSeries.setData(data.map(d => ({
+  // 봉 타입에 따라 집계
+  const chartData = aggregateData(data, state.activePeriod);
+
+  candleSeries.setData(chartData.map(d => ({
     time: d.date, open: d.open, high: d.high, low: d.low, close: d.close
   })));
 
@@ -195,7 +243,7 @@ function renderChart(data) {
     state.charts.maSeries[key] = s;
   });
 
-  volSeries.setData(data.map(d => ({
+  volSeries.setData(chartData.map(d => ({
     time: d.date, value: d.volume,
     color: d.close >= d.open ? 'rgba(74,222,128,0.4)' : 'rgba(248,113,113,0.4)'
   })));
@@ -390,7 +438,7 @@ function updateStockInfo(data) {
 
 
 // ════════════════════════════════════════
-//  UI 초기화 함수들
+//  UI 초기화
 // ════════════════════════════════════════
 
 function initWatchlistButton() {
@@ -476,6 +524,8 @@ function initPeriodTabs() {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      state.activePeriod = btn.dataset.period;
+      if (state.currentData) renderChart(state.currentData);
     });
   });
 }
@@ -716,12 +766,10 @@ function renderBacktestResult(r) {
         <span class="bt-card-value neutral">${r.totalTrades}회 (${r.wins}승 ${r.losses}패)</span>
       </div>
     </div>
-
     <div class="bt-chart-wrap">
       <div class="bt-chart-title">수익 곡선</div>
       <div class="bt-chart-container" id="btChart"></div>
     </div>
-
     <div class="bt-trades-wrap">
       <div class="bt-trades-title">거래 내역</div>
       <table class="bt-trades-table">
@@ -765,31 +813,24 @@ function renderBacktestResult(r) {
   equitySeries.setData(r.equity.map(e => ({ time: e.date, value: e.value })));
   btChart.timeScale().fitContent();
 }
+
+
 // ════════════════════════════════════════
 //  포트폴리오
 // ════════════════════════════════════════
 
-let pfCode    = null;
-let pfHoldings = [];  // { code, name, buyPrice, shares, buyDate }
-let pfDonut   = null;
-
-const PF_COLORS = ['#4ade80','#60a5fa','#f59e0b','#c084fc','#fb923c','#f87171','#34d399','#818cf8'];
-
 function initPortfolio() {
   pfHoldings = JSON.parse(localStorage.getItem('portfolio') || '[]');
 
-  // 종목 추가 버튼
   document.getElementById('pfAddBtn').addEventListener('click', () => {
     document.getElementById('pfForm').classList.toggle('hidden');
   });
 
-  // 취소 버튼
   document.getElementById('pfCancelBtn').addEventListener('click', () => {
     document.getElementById('pfForm').classList.add('hidden');
     resetPfForm();
   });
 
-  // 종목 검색
   const input  = document.getElementById('pfSearchInput');
   const result = document.getElementById('pfSearchResult');
 
@@ -815,10 +856,7 @@ function initPortfolio() {
     result.classList.add('hidden');
   });
 
-  // 저장 버튼
   document.getElementById('pfSaveBtn').addEventListener('click', savePfHolding);
-
-  // 날짜 기본값
   document.getElementById('pfBuyDate').value = new Date().toISOString().slice(0, 10);
 
   renderPortfolio();
@@ -841,8 +879,6 @@ async function savePfHolding() {
   if (!buyPrice || !shares) { alert('매수가와 수량을 입력해주세요.'); return; }
 
   const stock = state.stocks.find(s => s.code === pfCode) || {};
-
-  // 현재가 가져오기
   let currentPrice = buyPrice;
   try {
     const res = await fetch(`data/ohlcv/${pfCode}.json`);
@@ -861,8 +897,7 @@ async function savePfHolding() {
 }
 
 function renderPortfolio() {
-  const tbody   = document.getElementById('pfTableBody');
-  const emptyRow = document.getElementById('pfEmptyRow');
+  const tbody = document.getElementById('pfTableBody');
 
   if (!pfHoldings.length) {
     tbody.innerHTML = `
@@ -904,7 +939,6 @@ function renderPortfolio() {
     `;
   }).join('');
 
-  // 삭제 버튼 이벤트
   tbody.querySelectorAll('.pf-delete-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       pfHoldings.splice(Number(btn.dataset.index), 1);
@@ -924,14 +958,14 @@ function updatePfSummary(totalBuy, totalEval) {
   document.getElementById('pfTotalBuy').textContent   = totalBuy  > 0 ? totalBuy.toLocaleString()  + '원' : '—';
   document.getElementById('pfTotalEval').textContent  = totalEval > 0 ? totalEval.toLocaleString() + '원' : '—';
 
-  const profitEl  = document.getElementById('pfTotalProfit');
-  const returnEl  = document.getElementById('pfTotalReturn');
+  const profitEl = document.getElementById('pfTotalProfit');
+  const returnEl = document.getElementById('pfTotalReturn');
 
   if (totalBuy > 0) {
-    profitEl.textContent  = (profit >= 0 ? '+' : '') + Math.round(profit).toLocaleString() + '원';
-    profitEl.className    = 'pf-summary-value ' + (profit >= 0 ? 'positive' : 'negative');
-    returnEl.textContent  = (pct >= 0 ? '+' : '') + pct + '%';
-    returnEl.className    = 'pf-summary-value ' + (pct >= 0 ? 'positive' : 'negative');
+    profitEl.textContent = (profit >= 0 ? '+' : '') + Math.round(profit).toLocaleString() + '원';
+    profitEl.className   = 'pf-summary-value ' + (profit >= 0 ? 'positive' : 'negative');
+    returnEl.textContent = (pct >= 0 ? '+' : '') + pct + '%';
+    returnEl.className   = 'pf-summary-value ' + (pct >= 0 ? 'positive' : 'negative');
   } else {
     profitEl.textContent = '—';
     returnEl.textContent = '—';
@@ -941,15 +975,14 @@ function updatePfSummary(totalBuy, totalEval) {
 }
 
 function renderPfDonut(holdings, totalEval = 0) {
-  const canvas  = document.getElementById('pfDonutChart');
+  const canvas   = document.getElementById('pfDonutChart');
   const legendEl = document.getElementById('pfLegend');
-  const ctx     = canvas.getContext('2d');
+  const ctx      = canvas.getContext('2d');
 
   ctx.clearRect(0, 0, 200, 200);
   legendEl.innerHTML = '';
 
   if (!holdings.length || totalEval === 0) {
-    // 빈 도넛
     ctx.beginPath();
     ctx.arc(100, 100, 80, 0, Math.PI * 2);
     ctx.strokeStyle = '#1e2130';
@@ -961,10 +994,10 @@ function renderPfDonut(holdings, totalEval = 0) {
   let startAngle = -Math.PI / 2;
 
   holdings.forEach((h, i) => {
-    const evalAmt = h.currentPrice * h.shares;
-    const ratio   = evalAmt / totalEval;
+    const evalAmt  = h.currentPrice * h.shares;
+    const ratio    = evalAmt / totalEval;
     const endAngle = startAngle + ratio * Math.PI * 2;
-    const color   = PF_COLORS[i % PF_COLORS.length];
+    const color    = PF_COLORS[i % PF_COLORS.length];
 
     ctx.beginPath();
     ctx.arc(100, 100, 80, startAngle, endAngle);
@@ -974,7 +1007,6 @@ function renderPfDonut(holdings, totalEval = 0) {
 
     startAngle = endAngle;
 
-    // 범례
     const li = document.createElement('li');
     li.innerHTML = `
       <span class="pf-legend-dot" style="background:${color}"></span>
@@ -984,6 +1016,7 @@ function renderPfDonut(holdings, totalEval = 0) {
     legendEl.appendChild(li);
   });
 }
+
 
 // ── 시작 ──────────────────────────────
 init();

@@ -2,62 +2,47 @@ import FinanceDataReader as fdr
 import yfinance as yf
 import pandas as pd
 import ta
-import json, os
+import json, os, math
 from datetime import datetime, timedelta
-import math
-
 
 OUTPUT_DIR = 'data/ohlcv'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# 저장 기간 (1년)
 END_DATE   = datetime.today().strftime('%Y-%m-%d')
 START_DATE = (datetime.today() - timedelta(days=365)).strftime('%Y-%m-%d')
 
 
 def add_indicators(df):
-    """MA, RSI, MACD, 볼린저밴드 계산"""
     close = df['Close']
-
     df['ma5']   = ta.trend.sma_indicator(close, window=5).round(2)
     df['ma20']  = ta.trend.sma_indicator(close, window=20).round(2)
     df['ma60']  = ta.trend.sma_indicator(close, window=60).round(2)
     df['ma120'] = ta.trend.sma_indicator(close, window=120).round(2)
-
-    df['rsi'] = ta.momentum.rsi(close, window=14).round(2)
-
+    df['rsi']   = ta.momentum.rsi(close, window=14).round(2)
     macd = ta.trend.MACD(close)
     df['macd']        = macd.macd().round(2)
     df['macd_signal'] = macd.macd_signal().round(2)
     df['macd_hist']   = macd.macd_diff().round(2)
-
     bb = ta.volatility.BollingerBands(close, window=20, window_dev=2)
     df['bb_upper'] = bb.bollinger_hband().round(2)
     df['bb_mid']   = bb.bollinger_mavg().round(2)
     df['bb_lower'] = bb.bollinger_lband().round(2)
-
     return df
 
 
+def clean(val):
+    if val is None:
+        return None
+    try:
+        f = float(val)
+        return None if math.isnan(f) or math.isinf(f) else round(f, 2)
+    except:
+        return None
 
 
 def save_ohlcv(code, df):
-    """DataFrame → JSON 저장 (NaN → null 처리)"""
     df = df.dropna(subset=['Open', 'High', 'Low', 'Close', 'Volume'])
     records = []
-    
-    def clean(val):
-        """NaN, inf → None으로 변환"""
-        if val is None:
-            return None
-        try:
-            f = float(val)
-            if math.isnan(f) or math.isinf(f):
-                return None
-            return round(f, 2)
-        except:
-            return None
-
     for date, row in df.iterrows():
         records.append({
             "date":        str(date)[:10],
@@ -78,13 +63,12 @@ def save_ohlcv(code, df):
             "bb_mid":      clean(row.get('bb_mid')),
             "bb_lower":    clean(row.get('bb_lower')),
         })
-
     path = os.path.join(OUTPUT_DIR, f"{code}.json")
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(records, f, ensure_ascii=False)
 
+
 def fetch_domestic(codes):
-    """국내 종목 수집 (FinanceDataReader)"""
     print(f"\n[국내] {len(codes)}개 종목 수집 시작...")
     success, fail = 0, 0
     for code in codes:
@@ -96,7 +80,7 @@ def fetch_domestic(codes):
             df = add_indicators(df)
             save_ohlcv(code, df)
             success += 1
-            if success % 50 == 0:
+            if success % 100 == 0:
                 print(f"  국내 {success}개 완료...")
         except Exception as e:
             fail += 1
@@ -104,7 +88,6 @@ def fetch_domestic(codes):
 
 
 def fetch_foreign(tickers):
-    """해외 종목 수집 (yfinance)"""
     print(f"\n[해외] {len(tickers)}개 종목 수집 시작...")
     success, fail = 0, 0
     for ticker in tickers:
@@ -129,18 +112,11 @@ if __name__ == '__main__':
     with open('data/stocks.json', 'r', encoding='utf-8') as f:
         stocks = json.load(f)
 
-    domestic = [s['code'] for s in stocks if s['market'] in ('KOSPI', 'KOSDAQ')]
+    domestic = [s['code'] for s in stocks if s['market'] in ('KOSPI', 'KOSDAQ', 'ETF_KR')]
+    foreign  = [s['code'] for s in stocks if s['market'] in ('US_STOCK', 'US_ETF')]
 
-    # 해외 주요 종목
-    foreign = [
-        'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA',
-        'TSLA', 'META', 'NFLX', 'AMD', 'INTC',
-        'AAPL', 'JPM', 'V', 'WMT', 'JNJ'
-    ]
-    # 중복 제거
-    foreign = list(dict.fromkeys(foreign))
+    print(f"국내: {len(domestic)}개 / 해외: {len(foreign)}개")
 
-    # 전체 국내 종목 수집 (시간이 걸릴 수 있어요)
     fetch_domestic(domestic)
     fetch_foreign(foreign)
 
