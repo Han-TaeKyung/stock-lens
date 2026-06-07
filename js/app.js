@@ -51,6 +51,7 @@ async function init() {
   initSignalFilters();
   initCharts();
   initWatchlistButton();
+  initMobileSignal();
   renderWatchlist();
   renderRecent();
 }
@@ -404,6 +405,7 @@ function updateSignalPanel(signals) {
 
 function renderSignalList(signals) {
   updateSignalPanel(signals);
+  updateMobileSignalBar(signals);
 }
 
 
@@ -1019,6 +1021,113 @@ function renderPfDonut(holdings, totalEval = 0) {
   });
 }
 
+// ════════════════════════════════════════
+//  모바일 신호 UI
+// ════════════════════════════════════════
+
+let mobileSignalData = [];
+let mobileSheetSideFilter = 'all';
+
+function initMobileSignal() {
+  const bar     = document.getElementById('mobileSignalBar');
+  const sheet   = document.getElementById('mobileSheet');
+  const overlay = document.getElementById('mobileSheetOverlay');
+  const closeBtn = document.getElementById('mobileSheetClose');
+
+  // 신호 바 클릭 → 시트 열기
+  bar.addEventListener('click', () => openMobileSheet());
+
+  // 오버레이 / 닫기 버튼 → 시트 닫기
+  overlay.addEventListener('click', closeMobileSheet);
+  closeBtn.addEventListener('click', closeMobileSheet);
+
+  // 필터 버튼
+  document.querySelectorAll('.msf-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.msf-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mobileSheetSideFilter = btn.dataset.side;
+      renderMobileSheetList();
+    });
+  });
+}
+
+function openMobileSheet() {
+  const sheet   = document.getElementById('mobileSheet');
+  const overlay = document.getElementById('mobileSheetOverlay');
+  sheet.classList.remove('hidden');
+  overlay.classList.remove('hidden');
+  requestAnimationFrame(() => sheet.classList.add('open'));
+  renderMobileSheetList();
+}
+
+function closeMobileSheet() {
+  const sheet   = document.getElementById('mobileSheet');
+  const overlay = document.getElementById('mobileSheetOverlay');
+  sheet.classList.remove('open');
+  setTimeout(() => {
+    sheet.classList.add('hidden');
+    overlay.classList.add('hidden');
+  }, 300);
+}
+
+function updateMobileSignalBar(signals) {
+  mobileSignalData = signals;
+
+  const cutoff    = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const recent    = signals.filter(s => s.date >= cutoffStr);
+
+  const buy     = recent.filter(s => s.side === 'buy').length;
+  const sell    = recent.filter(s => s.side === 'sell').length;
+  const caution = recent.filter(s => s.side === 'caution').length;
+
+  document.getElementById('msbBuy').textContent     = `▲ ${buy}`;
+  document.getElementById('msbSell').textContent    = `▼ ${sell}`;
+  document.getElementById('msbCaution').textContent = `● ${caution}`;
+
+  const score = buy - sell;
+  let verdict, color;
+  if      (score >= 4)  { verdict = '강한 매수 🔥'; color = 'var(--color-up)'; }
+  else if (score >= 2)  { verdict = '매수 우세 ▲';  color = 'var(--color-up)'; }
+  else if (score >= 1)  { verdict = '약한 매수 ↑';  color = 'var(--color-up)'; }
+  else if (score <= -4) { verdict = '강한 매도 ❄️'; color = 'var(--color-down)'; }
+  else if (score <= -2) { verdict = '매도 우세 ▼';  color = 'var(--color-down)'; }
+  else if (score <= -1) { verdict = '약한 매도 ↓';  color = 'var(--color-down)'; }
+  else if (caution > 2) { verdict = '과열 주의 ⚠️'; color = 'var(--color-warning)'; }
+  else                  { verdict = '중립 —';        color = 'var(--text-secondary)'; }
+
+  const el = document.getElementById('msbVerdict');
+  el.textContent  = verdict;
+  el.style.color  = color;
+}
+
+function renderMobileSheetList() {
+  const listEl  = document.getElementById('mobileSheetList');
+  const filtered = mobileSheetSideFilter === 'all'
+    ? mobileSignalData
+    : mobileSignalData.filter(s => s.side === mobileSheetSideFilter);
+
+  const latest = [...filtered].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30);
+
+  if (!latest.length) {
+    listEl.innerHTML = '<li style="color:var(--text-disabled);font-size:13px;padding:16px;">신호 없음</li>';
+    return;
+  }
+
+  listEl.innerHTML = latest.map(s => {
+    const color = s.side === 'buy' ? 'var(--color-up)' : s.side === 'sell' ? 'var(--color-down)' : 'var(--color-warning)';
+    const icon  = s.side === 'buy' ? '▲' : s.side === 'sell' ? '▼' : '●';
+    return `
+      <li>
+        <span class="msl-label" style="color:${color}">${icon} ${s.label}</span>
+        <span class="msl-date">${s.date} · ${s.price?.toLocaleString()}원</span>
+        <span class="msl-desc">${s.desc || ''}</span>
+      </li>
+    `;
+  }).join('');
+}
 
 // ── 시작 ──────────────────────────────
 init();
