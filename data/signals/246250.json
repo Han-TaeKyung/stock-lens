@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 [{"code": "246250", "date": "2025-07-03", "side": "buy", "type": "pullback_ma20", "label": "눌림목 매수 (20일선 반등)", "desc": "20일선(생명선) 지지 확인 — 안전한 매수 타점", "price": 1969.0}, {"code": "246250", "date": "2025-08-28", "side": "buy", "type": "pullback_ma60", "label": "눌림목 매수 (60일선 반등)", "desc": "60일선(수급선) 지지 확인 — 중기 매수 타점", "price": 1969.0}, {"code": "246250", "date": "2025-08-29", "side": "buy", "type": "pullback_ma60", "label": "눌림목 매수 (60일선 반등)", "desc": "60일선(수급선) 지지 확인 — 중기 매수 타점", "price": 1969.0}, {"code": "246250", "date": "2025-11-27", "side": "buy", "type": "macd_hist_positive", "label": "MACD 오실레이터 양전환", "desc": "히스토그램 음→양 전환 — 매수 준비 타이밍", "price": 1969.0}]
+=======
+[]
+>>>>>>> 9594b11d2f9db698527eab0d01431eb8b9c1a823
