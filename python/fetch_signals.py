@@ -185,7 +185,7 @@ def detect(code, data):
                         "label":"MACD 오실레이터 음전환",
                         "desc":"히스토그램 양→음 전환 — 매도 주의","price":close})
 
-        # 13. 볼린저 상단 돌파
+        # 15. 볼린저 상단 돌파
         if BB_SIGNAL and all([bbu, pbbu, pclose]):
             if pclose <= pbbu and close > bbu:
                 results.append({"code":code,"date":dt,"side":"sell",
@@ -193,6 +193,74 @@ def detect(code, data):
                     "label":"볼린저 상단 돌파",
                     "desc":"볼린저밴드 상단 돌파 — 단기 과열 주의","price":close})
 
+
+         # ── 복합 신호 탐지 ─────────────────────────────────────
+        # 오늘 발생한 신호 타입 목록
+        today_types = set(r['type'] for r in results if r['date'] == dt)
+
+        # 복합 신호 1 — 일부 익절 타이밍
+        # BB상단돌파 + RSI과매수 + 이격도과다(MA5) 동시 발생
+        if {'bb_upper_break', 'rsi_overbought', 'disparity_ma5'}.issubset(today_types):
+            results.append({
+                "code": code, "date": dt, "side": "sell",
+                "type": "combo_partial_profit",
+                "label": "🔴 일부 익절 타이밍",
+                "desc": "BB↑ + RSI↓ + 이격(5) 동시 발생 — 30~50% 물량 수익 실현 고려",
+                "price": close
+            })
+
+        # 복합 신호 2 — 추세 매도
+        # 데드크로스(5×20) 또는 60일선 이탈 발생
+        if 'dead_cross_5_20' in today_types or 'ma60_breakdown' in today_types:
+            trigger = 'dead_cross_5_20' if 'dead_cross_5_20' in today_types else 'ma60_breakdown'
+            trigger_label = '데드X(5×20)' if trigger == 'dead_cross_5_20' else '60선이탈'
+            results.append({
+                "code": code, "date": dt, "side": "sell",
+                "type": "combo_trend_sell",
+                "label": f"🔴 추세 매도 — {trigger_label}",
+                "desc": f"{trigger_label} 발생 — 남은 물량 전량 정리, 리스크 방어",
+                "price": close
+            })
+         # ── 복합 매수 신호 1 — 추세 전환 매수 (달리는 말 올라타기)
+        # MACD 골든크로스 또는 오실레이터 양전환 + 골든크로스(5×20) 동시 발생
+        macd_buy = {'macd_golden_cross', 'macd_hist_positive'} & today_types
+        golden_buy = {'golden_cross_5_20', 'golden_cross_20_60'} & today_types
+        if macd_buy and golden_buy:
+            macd_label   = 'MACD↑' if 'macd_golden_cross' in macd_buy else 'MACD+'
+            golden_label = '골든X(5×20)' if 'golden_cross_5_20' in golden_buy else '골든X(20×60)'
+            results.append({
+                "code": code, "date": dt, "side": "buy",
+                "type": "combo_trend_buy",
+                "label": f"🟢 추세 전환 매수 — {macd_label}+{golden_label}",
+                "desc": f"{macd_label} + {golden_label} 동시 발생 — 상승 에너지 확인, 정석 매수 타이밍",
+                "price": close
+            })
+
+        # ── 복합 매수 신호 2 — 눌림목 매수 (싸게 사서 모으기)
+        # 눌림목(20 또는 60) + RSI과매도탈출 또는 BB하단이탈 조합
+        pullback = {'pullback_ma20', 'pullback_ma60'} & today_types
+        rsi_bb_buy = {'rsi_oversold', 'bb_lower_break'} & today_types
+        if pullback and rsi_bb_buy:
+            pullback_label = '눌림(20)' if 'pullback_ma20' in pullback else '눌림(60)'
+            extra_label    = 'RSI↑' if 'rsi_oversold' in rsi_bb_buy else 'BB↓'
+            results.append({
+                "code": code, "date": dt, "side": "buy",
+                "type": "combo_pullback_buy",
+                "label": f"🟢 눌림목 매수 — {pullback_label}+{extra_label}",
+                "desc": f"{pullback_label} + {extra_label} 동시 발생 — 리스크 낮은 분할 매수 1차 타점",
+                "price": close
+            })
+
+        # ── 복합 매수 신호 3 — 낙폭과대 반등 매수
+        # RSI 과매도 탈출 + BB 하단 이탈 동시 발생
+        if {'rsi_oversold', 'bb_lower_break'}.issubset(today_types):
+            results.append({
+                "code": code, "date": dt, "side": "buy",
+                "type": "combo_oversold_bounce",
+                "label": "🟢 낙폭과대 반등 매수",
+                "desc": "RSI↑ + BB↓ 동시 발생 — 과매도 기술적 반등 타이밍, 단기 분할 매수",
+                "price": close
+            })
     return results
 
 

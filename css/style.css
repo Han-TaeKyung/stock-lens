@@ -569,6 +569,16 @@ body {
 .bt-trades-table tr:last-child td { border-bottom: none; }
 .bt-trades-table tr:hover td { background: var(--bg-elevated); }
 .hidden { display: none !important; }
+/* ── 서브 헤더 (탭 바) ── */
+.sub-header {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 var(--space-lg);
+  display: flex;
+  align-items: center;
+  height: 40px;
+  flex-shrink: 0;
+}
 .page-tabs { display: flex; gap: var(--space-xs); }
 .page-tab {
   background: none;
@@ -927,6 +937,28 @@ body {
 .msl-desc  { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
 
 @media (max-width: 640px) {
+  .header {
+    flex-wrap: wrap;
+    height: auto;
+    padding: var(--space-sm) var(--space-md);
+    gap: var(--space-sm);
+  }
+  .header-left { order: 1; }
+  .header-right { display: none; } /* 시장 필터 모바일에서 숨김 */
+  .header-center {
+    order: 2;
+    flex: 1 1 100%;   /* 검색창 전체 너비 */
+    max-width: 100%;
+  }
+  .sub-header {
+    padding: 0 var(--space-md);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .sub-header::-webkit-scrollbar { display: none; }
+  .layout {
+    height: calc(100vh - 88px - 40px - 44px - 56px);
+  }
   .mobile-signal-bar { display: flex; }
   .signal-panel { display: none !important; }
   .layout { height: calc(100vh - 56px - 44px - 56px); }

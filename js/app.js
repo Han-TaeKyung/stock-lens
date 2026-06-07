@@ -11,16 +11,16 @@ const state = {
   activeMarket: 'ALL',
   activePeriod: 'D',
   charts: {},
-  activeSignals: new Set([
-    'golden_cross_5_20', 'golden_cross_20_60',
-    'dead_cross_5_20',   'dead_cross_20_60',
-    'pullback_ma20',     'pullback_ma60',
-    'rsi_oversold',      'rsi_overbought',
-    'disparity_ma5',     'disparity_ma20',
-    'bb_upper_break',    'bb_lower_break',
-    'ma60_breakdown',   'macd_golden_cross', 
-    'macd_dead_cross', 'macd_hist_positive', 
-    'macd_hist_negative'
+  activeSignals: new Set([ //기본 비활성화
+    // 'golden_cross_5_20', 'golden_cross_20_60',
+    // 'dead_cross_5_20',   'dead_cross_20_60',
+    // 'pullback_ma20',     'pullback_ma60',
+    // 'rsi_oversold',      'rsi_overbought',
+    // 'disparity_ma5',     'disparity_ma20',
+    // 'bb_upper_break',    'bb_lower_break',
+    // 'ma60_breakdown',   'macd_golden_cross', 
+    // 'macd_dead_cross', 'macd_hist_positive', 
+    // 'macd_hist_negative'
   ]),
 };
 
@@ -323,14 +323,18 @@ async function renderSignalMarkers() {
 
   if (!filtered.length) return;
 
-  const markers = filtered.map(s => ({
-    time:     s.date,
-    position: s.side === 'buy' ? 'belowBar' : s.side === 'sell' ? 'aboveBar' : 'inBar',
-    color:    s.side === 'buy' ? '#4ade80' : s.side === 'sell' ? '#f87171' : '#f59e0b',
-    shape:    s.side === 'buy' ? 'arrowUp'  : s.side === 'sell' ? 'arrowDown' : 'circle',
-    text:     s.label,
-    size:     1.5,
-  }));
+  const markers = filtered.map(s => {
+    // 복합 신호는 별 모양 + 더 큰 사이즈로 강조
+    const isCombo = s.type.startsWith('combo_');
+    return {
+      time:     s.date,
+      position: 'aboveBar',
+      color:    isCombo ? '#ff4444' : (s.side === 'buy' ? '#4ade80' : s.side === 'sell' ? '#f87171' : '#f59e0b'),
+      shape:    isCombo ? 'arrowDown' : (s.side === 'buy' ? 'arrowUp' : s.side === 'sell' ? 'arrowDown' : 'circle'),
+      text:     isCombo ? `⭐ ${s.label}` : s.label,
+      size:     isCombo ? 3 : 1.5,
+    };
+  });
 
   markers.sort((a, b) => a.time.localeCompare(b.time));
 
@@ -382,15 +386,44 @@ function updateSignalPanel(signals) {
   verdictEl.textContent = verdict;
   verdictEl.className   = `sp-verdict-value ${cls}`;
 
+  // 복합 신호 카드 (상단 강조 표시)
+  const comboSignals = [...signals]
+    .filter(s => s.type.startsWith('combo_'))
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5);
+
+  let comboHtml = '';
+  if (comboSignals.length) {
+    comboHtml = comboSignals.map(s => {
+      const isBuy   = s.side === 'buy';
+      const bgColor = isBuy ? 'rgba(74,222,128,0.08)' : 'rgba(255,68,68,0.08)';
+      const bdColor = isBuy ? 'rgba(74,222,128,0.3)'  : 'rgba(255,68,68,0.3)';
+      const txColor = isBuy ? '#4ade80' : '#ff4444';
+      return `
+        <li style="
+          background: ${bgColor};
+          border: 1px solid ${bdColor};
+          border-radius: var(--radius-md);
+          padding: 10px 12px;
+          margin-bottom: 6px;
+        ">
+          <div style="color:${txColor};font-size:13px;font-weight:700;">${s.label}</div>
+          <div style="color:var(--text-disabled);font-size:11px;font-family:var(--font-mono);margin:2px 0;">${s.date} · ${s.price?.toLocaleString()}원</div>
+          <div style="color:var(--text-secondary);font-size:11px;">${s.desc}</div>
+        </li>
+      `;
+    }).join('');
+  }
+
   const listEl = document.getElementById('spSignalList');
   const latest = [...signals].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
 
   if (!latest.length) {
-    listEl.innerHTML = '<li style="color:var(--text-disabled);font-size:12px;">신호 없음</li>';
+    listEl.innerHTML = comboHtml || '<li style="color:var(--text-disabled);font-size:12px;">신호 없음</li>';
     return;
   }
 
-  listEl.innerHTML = latest.map(s => {
+  listEl.innerHTML = comboHtml + latest.map(s => {
     const color = s.side === 'buy' ? 'var(--color-up)' : s.side === 'sell' ? 'var(--color-down)' : 'var(--color-warning)';
     const icon  = s.side === 'buy' ? '▲' : s.side === 'sell' ? '▼' : '●';
     return `
