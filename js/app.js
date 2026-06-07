@@ -18,7 +18,9 @@ const state = {
     'rsi_oversold',      'rsi_overbought',
     'disparity_ma5',     'disparity_ma20',
     'bb_upper_break',    'bb_lower_break',
-    'ma60_breakdown'
+    'ma60_breakdown',   'macd_golden_cross', 
+    'macd_dead_cross', 'macd_hist_positive', 
+    'macd_hist_negative'
   ]),
 };
 

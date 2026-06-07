@@ -8,6 +8,7 @@ RSI_OVERSOLD        = 30
 RSI_OVERBOUGHT      = 70
 DISPARITY_THRESHOLD = 110.0
 BB_SIGNAL           = True
+MACD_SIGNAL         = True 
 SIGNAL_DAYS         = 365
 
 
@@ -143,6 +144,46 @@ def detect(code, data):
                     "type":"bb_lower_break",
                     "label":"볼린저 하단 이탈",
                     "desc":"볼린저밴드 하단 이탈 — 단기 반등 가능","price":close})
+
+        # 14. MACD 골든크로스 (MACD선이 시그널선 상향 돌파 → 매수)
+        if MACD_SIGNAL:
+            cur_macd = v(c, 'macd')
+            prv_macd = v(p, 'macd')
+            cur_sig  = v(c, 'macd_signal')
+            prv_sig  = v(p, 'macd_signal')
+            cur_hist = v(c, 'macd_hist')
+            prv_hist = v(p, 'macd_hist')
+
+            # MACD 골든크로스
+            if cur_macd is not None and cur_sig is not None and \
+               prv_macd is not None and prv_sig is not None:
+                if prv_macd < prv_sig and cur_macd > cur_sig:
+                    results.append({"code":code,"date":dt,"side":"buy",
+                        "type":"macd_golden_cross",
+                        "label":"MACD 골든크로스",
+                        "desc":"MACD선이 시그널선 상향 돌파 — 매수 타점","price":close})
+
+                # MACD 데드크로스
+                if prv_macd > prv_sig and cur_macd < cur_sig:
+                    results.append({"code":code,"date":dt,"side":"sell",
+                        "type":"macd_dead_cross",
+                        "label":"MACD 데드크로스",
+                        "desc":"MACD선이 시그널선 하향 돌파 — 매도 타점","price":close})
+
+            # MACD 오실레이터 양전환
+            if cur_hist is not None and prv_hist is not None:
+                if prv_hist < 0 and cur_hist >= 0:
+                    results.append({"code":code,"date":dt,"side":"buy",
+                        "type":"macd_hist_positive",
+                        "label":"MACD 오실레이터 양전환",
+                        "desc":"히스토그램 음→양 전환 — 매수 준비 타이밍","price":close})
+
+                # MACD 오실레이터 음전환
+                if prv_hist > 0 and cur_hist <= 0:
+                    results.append({"code":code,"date":dt,"side":"sell",
+                        "type":"macd_hist_negative",
+                        "label":"MACD 오실레이터 음전환",
+                        "desc":"히스토그램 양→음 전환 — 매도 주의","price":close})
 
         # 13. 볼린저 상단 돌파
         if BB_SIGNAL and all([bbu, pbbu, pclose]):

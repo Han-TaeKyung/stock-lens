@@ -1,1 +1,1 @@
-[]
+[{"code": "0010F0", "date": "2026-05-27", "side": "buy", "type": "macd_golden_cross", "label": "MACD 골든크로스", "desc": "MACD선이 시그널선 상향 돌파 — 매수 타점", "price": 3725.0}, {"code": "0010F0", "date": "2026-05-27", "side": "buy", "type": "macd_hist_positive", "label": "MACD 오실레이터 양전환", "desc": "히스토그램 음→양 전환 — 매수 준비 타이밍", "price": 3725.0}]
