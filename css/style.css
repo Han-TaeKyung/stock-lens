@@ -233,7 +233,7 @@ body {
   .header { padding: 0 var(--space-md); }
   .layout { height: calc(100vh - 56px - 56px); }
   .bottom-tab { display: flex; }
-  .chart-area { padding: var(--space-sm); }
+  .chart-area { padding: var(--space-sm); padding-bottom: 100px;}
 }
 
 /* ── 신호 필터 ── */
