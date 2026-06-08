@@ -234,6 +234,13 @@ body {
   .layout { height: calc(100vh - 56px - 56px); }
   .bottom-tab { display: flex; }
   .chart-area { padding: var(--space-sm); padding-bottom: 100px;}
+  /* 차트 높이 고정 */
+  .chart-container {
+    min-height: 270px !important;
+    flex: 0 0 270px !important;
+  }
+  .chart-container.volume { flex: 0 0 60px !important; }
+  .chart-container.sub    { flex: 0 0 80px  !important; }
 }
 
 /* ── 신호 필터 ── */
