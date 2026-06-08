@@ -52,6 +52,7 @@ async function init() {
   initCharts();
   initWatchlistButton();
   initMobileSignal();
+  initGuideModal();
   renderWatchlist();
   renderRecent();
 }
@@ -1160,6 +1161,32 @@ function renderMobileSheetList() {
       </li>
     `;
   }).join('');
+}
+
+// ════════════════════════════════════════
+//  투자 전략 가이드 모달
+// ════════════════════════════════════════
+function initGuideModal() {
+  const modal    = document.getElementById('guideModal');
+  const overlay  = document.getElementById('guideOverlay');
+  const closeBtn = document.getElementById('guideModalClose');
+  const btn      = document.getElementById('guideBtn');
+
+  const open  = () => { modal.classList.remove('hidden'); overlay.classList.remove('hidden'); };
+  const close = () => { modal.classList.add('hidden');    overlay.classList.add('hidden'); };
+
+  if (btn) btn.addEventListener('click', open);
+  overlay.addEventListener('click', close);
+  closeBtn.addEventListener('click', close);
+
+  document.querySelectorAll('.guide-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.guide-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.guide-content').forEach(c => c.classList.add('hidden'));
+      tab.classList.add('active');
+      document.getElementById(`guide-${tab.dataset.guide}`).classList.remove('hidden');
+    });
+  });
 }
 
 // ── 시작 ──────────────────────────────
