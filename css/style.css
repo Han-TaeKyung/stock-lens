@@ -1156,5 +1156,10 @@ body {
   .guide-btn { padding: 4px 8px; font-size: 14px; }
   .guide-btn-text { display: none; }
 
-  /* 백테스팅 반응형작업 */
+  /* 백테스트 반응형작업 */
+  .bt-wrap{
+    display: block;
+  }
+  .bt-config{width: 100%;}
+  .bt-result{padding-bottom: 110px;}
 }
