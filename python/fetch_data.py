@@ -9,7 +9,7 @@ OUTPUT_DIR = 'data/ohlcv'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 END_DATE   = datetime.today().strftime('%Y-%m-%d')
-START_DATE = (datetime.today() - timedelta(days=365)).strftime('%Y-%m-%d')
+START_DATE = (datetime.today() - timedelta(days=1095)).strftime('%Y-%m-%d') # 최근 3년치
 
 
 def add_indicators(df):

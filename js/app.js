@@ -177,8 +177,8 @@ function aggregateData(data, period) {
     let key;
 
     if (period === 'W') {
-      const day  = date.getDay();
-      const diff = (day === 0 ? -6 : 1 - day);
+      const day    = date.getDay();
+      const diff   = (day === 0 ? -6 : 1 - day);
       const monday = new Date(date);
       monday.setDate(date.getDate() + diff);
       key = monday.toISOString().slice(0, 10);
@@ -199,7 +199,25 @@ function aggregateData(data, period) {
     }
   }
 
-  return Object.values(groups).sort((a, b) => a.date.localeCompare(b.date));
+  // 집계된 봉 배열
+  const bars = Object.values(groups).sort((a, b) => a.date.localeCompare(b.date));
+
+  // ── 주봉/월봉 기준으로 이평선 재계산 ──────────
+  const windows = { ma5: 5, ma20: 20, ma60: 60, ma120: 120 };
+
+  for (let i = 0; i < bars.length; i++) {
+    for (const [key, window] of Object.entries(windows)) {
+      if (i + 1 < window) {
+        bars[i][key] = null;
+      } else {
+        const slice = bars.slice(i + 1 - window, i + 1);
+        const avg   = slice.reduce((sum, b) => sum + b.close, 0) / window;
+        bars[i][key] = Math.round(avg * 100) / 100;
+      }
+    }
+  }
+
+  return bars;
 }
 
 
@@ -243,7 +261,7 @@ function renderChart(data) {
     const s = mainChart.addSeries(LightweightCharts.LineSeries, {
       color: maColors[key], lineWidth: 1, priceLineVisible: false
     });
-    s.setData(data.filter(d => d[key] != null).map(d => ({ time: d.date, value: d[key] })));
+    s.setData(chartData.filter(d => d[key] != null).map(d => ({ time: d.date, value: d[key] })));
     state.charts.maSeries[key] = s;
   });
 
