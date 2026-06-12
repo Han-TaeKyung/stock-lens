@@ -1,1 +1,1 @@
-[{"code": "0181B0", "date": "2026-06-05", "side": "sell", "type": "rsi_overbought", "label": "RSI 과매수 탈출 (70)", "desc": "RSI 과매수 구간 이탈 — 수익 실현 고려", "price": 11905.0}]
+[{"code": "0181B0", "date": "2026-06-05", "side": "sell", "type": "rsi_overbought", "label": "RSI 과매수 탈출 (70)", "desc": "RSI 과매수 구간 이탈 — 수익 실현 고려", "price": 11905.0}, {"code": "0181B0", "date": "2026-06-12", "side": "caution", "type": "disparity_ma20", "label": "이격도 과다 MA20 (110.69%)", "desc": "20일선 대비 110.69% — 일부 수익 실현 고려", "price": 12035.0}]
