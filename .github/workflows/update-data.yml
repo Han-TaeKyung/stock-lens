@@ -30,6 +30,12 @@ jobs:
         run: |
           python python/fetch_signals.py
 
+      - name: 🔔 박스권 이탈 알림
+        env:
+          KAKAO_WEBHOOK_URL: ${{ secrets.KAKAO_WEBHOOK_URL }}
+        run: |
+          python python/send_alert.py
+
       - name: 💾 변경사항 커밋 & 푸시
         run: |
           git config user.name "github-actions[bot]"
