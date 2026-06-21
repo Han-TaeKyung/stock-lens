@@ -30,9 +30,9 @@ jobs:
         run: |
           python python/fetch_signals.py
 
-      - name: 🔔 박스권 이탈 알림
+      - name: 🔔 박스권 이탈 알림 (카카오워크)
         env:
-          KAKAO_WEBHOOK_URL: ${{ secrets.KAKAO_WEBHOOK_URL }}
+          KAKAO_WEBHOOK_URLS: ${{ secrets.KAKAO_WEBHOOK_URLS }}
         run: |
           python python/send_alert.py
 

@@ -6,8 +6,13 @@ from datetime import datetime, timedelta
 OHLCV_DIR  = 'data/ohlcv'
 SIGNAL_DIR = 'data/signals'
 
-# 카카오 오픈채팅 웹훅 URL (GitHub Secrets에서 가져옴)
-KAKAO_WEBHOOK_URL = os.environ.get('KAKAO_WEBHOOK_URL', '')
+# 카카오워크 웹훅 URL 목록 (콤마로 구분)
+KAKAO_WEBHOOK_URLS = [
+    url.strip()
+    for url in os.environ.get('KAKAO_WEBHOOK_URLS', '').split(',')
+    if url.strip()
+]
+
 
 # 박스권 감지 설정
 BOX_PERIOD    = 20    # 박스권 기준 기간 (일)
@@ -93,22 +98,31 @@ def get_today_signals(code):
         return []
 
 
-def send_kakao_message(text):
-    if not KAKAO_WEBHOOK_URL:
-        print("⚠️ KAKAO_WEBHOOK_URL 환경변수가 없습니다.")
-        return False
+def send_kakao_message(url, text):
+    """카카오워크 웹훅 전송"""
     try:
         res = requests.post(
-            KAKAO_WEBHOOK_URL,
+            url,
             data=json.dumps({"text": text}, ensure_ascii=False).encode('utf-8'),
             headers={"Content-Type": "application/json; charset=utf-8"},
             timeout=10
         )
-        print(f"  카카오워크 응답: {res.status_code}")
         return res.status_code == 200
     except Exception as e:
-        print(f"  카카오워크 전송 실패: {e}")
+        print(f"  전송 실패: {e}")
         return False
+
+
+def send_all(text):
+    if not KAKAO_WEBHOOK_URLS:
+        print("⚠️ KAKAO_WEBHOOK_URLS 환경변수가 없습니다.")
+        return
+    results = []
+    for i, url in enumerate(KAKAO_WEBHOOK_URLS, 1):
+        success = send_kakao_message(url, text)
+        results.append(success)
+        print(f"    {'✅' if success else '❌'} 수신자 {i} 전송 {'완료' if success else '실패'}")
+    return all(results)
 
 def run():
     # 종목 목록 로드
@@ -160,8 +174,8 @@ def run():
 ━━━━━━━━━━━━━━━
 🔗 https://Han-TaeKyung.github.io/stock-lens"""
 
-        success = send_kakao_message(msg)
-        print(f"  {'✅' if success else '❌'} {a['name']} ({a['code']}) 알림 {'전송 완료' if success else '전송 실패'}")
+        send_all(msg)
+        print(f"  ✅ {a['name']} ({a['code']}) → {len(KAKAO_WEBHOOK_URLS)}명에게 전송 완료")
 
 
 if __name__ == '__main__':
