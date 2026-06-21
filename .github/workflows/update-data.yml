@@ -33,6 +33,7 @@ jobs:
       - name: 🔔 박스권 이탈 알림 (카카오워크)
         env:
           KAKAO_WEBHOOK_URLS: ${{ secrets.KAKAO_WEBHOOK_URLS }}
+          WATCH_CODES: ${{ secrets.WATCH_CODES }}  # ← 추가
         run: |
           python python/send_alert.py
 

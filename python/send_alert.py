@@ -18,8 +18,9 @@ KAKAO_WEBHOOK_URLS = [
 BOX_PERIOD    = 20    # 박스권 기준 기간 (일)
 BOX_THRESHOLD = 0.02  # 돌파 기준 (2%)
 
-# 알림 대상 종목 (관심 종목만 필터링 가능)
-WATCH_CODES = []  # 비어있으면 전체 종목
+# GitHub Secrets 또는 환경변수에서 종목 코드 로드
+_watch_env = os.environ.get('WATCH_CODES', '')
+WATCH_CODES = [c.strip() for c in _watch_env.split(',') if c.strip()]
 
 
 def detect_box_breakout(code):
