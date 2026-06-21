@@ -94,21 +94,21 @@ def get_today_signals(code):
 
 
 def send_kakao_message(text):
-    """카카오 오픈채팅 웹훅 전송"""
     if not KAKAO_WEBHOOK_URL:
-        print("⚠️ KAKAO_WEBHOOK_URL 환경변수가 설정되지 않았습니다.")
+        print("⚠️ KAKAO_WEBHOOK_URL 환경변수가 없습니다.")
         return False
     try:
         res = requests.post(
             KAKAO_WEBHOOK_URL,
-            json={"text": text},
+            data=json.dumps({"text": text}, ensure_ascii=False).encode('utf-8'),
+            headers={"Content-Type": "application/json; charset=utf-8"},
             timeout=10
         )
+        print(f"  카카오워크 응답: {res.status_code}")
         return res.status_code == 200
     except Exception as e:
-        print(f"카카오 전송 실패: {e}")
+        print(f"  카카오워크 전송 실패: {e}")
         return False
-
 
 def run():
     # 종목 목록 로드
