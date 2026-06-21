@@ -69,6 +69,7 @@ def fetch_stock_list():
         # 소재·부품
         ("MP",   "MP Materials"),
         ("GLW",  "Corning"),
+        ("PL",   "Planet Labs"),
     ]
     for code, name in us_stocks:
         all_stocks.append({"code": code, "name": name, "market": "US_STOCK"})
