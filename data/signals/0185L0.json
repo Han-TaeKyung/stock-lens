@@ -1,1 +1,1 @@
-[]
+[{"code": "0185L0", "date": "2026-06-18", "side": "buy", "type": "pullback_ma20", "label": "눌림목 매수 (20일선 반등)", "desc": "20일선(생명선) 지지 확인 — 안전한 매수 타점", "price": 10400.0}, {"code": "0185L0", "date": "2026-06-22", "side": "buy", "type": "golden_cross_5_20", "label": "골든크로스 (MA5×MA20)", "desc": "단기 매수 타이밍 — 분할 매수 시작", "price": 10460.0}]
