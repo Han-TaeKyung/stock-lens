@@ -179,5 +179,31 @@ def run():
         print(f"  ✅ {a['name']} ({a['code']}) → {len(KAKAO_WEBHOOK_URLS)}명에게 전송 완료")
 
 
+def run():
+    today = datetime.today().strftime('%Y-%m-%d')
+    print(f"오늘 날짜 기준 체크: {today}")
+
+    with open('data/stocks.json', 'r', encoding='utf-8') as f:
+        stocks = json.load(f)
+
+    codes = WATCH_CODES if WATCH_CODES else [s['code'] for s in stocks]
+    print(f"감시 종목: {len(codes)}개")
+
+    alerts = []
+    for code in codes:
+        result = detect_box_breakout(code)
+        if result:
+            # 오늘 날짜 데이터인지 확인
+            if result['date'] != today:
+                print(f"  ⚠️ {code} 데이터 날짜 불일치: {result['date']} (오늘: {today})")
+                continue
+            result['name'] = get_stock_name(code, stocks)
+            result['signals'] = get_today_signals(code)
+            alerts.append(result)
+
+    print(f"오늘 박스권 이탈 종목: {len(alerts)}개")
+    # ... 기존 코드 유지
+
+
 if __name__ == '__main__':
     run()
