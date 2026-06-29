@@ -1,1 +1,1 @@
-[{"code": "0184V0", "date": "2026-06-09", "side": "buy", "type": "rsi_oversold", "label": "RSI 과매도 탈출 (30)", "desc": "RSI 과매도 구간 탈출 — 반등 매수 타이밍", "price": 7515.0}]
+[{"code": "0184V0", "date": "2026-06-09", "side": "buy", "type": "rsi_oversold", "label": "RSI 과매도 탈출 (30)", "desc": "RSI 과매도 구간 탈출 — 반등 매수 타이밍", "price": 7515.0}, {"code": "0184V0", "date": "2026-06-29", "side": "buy", "type": "pullback_ma20", "label": "눌림목 매수 (20일선 반등)", "desc": "20일선(생명선) 지지 확인 — 안전한 매수 타점", "price": 7995.0}]
