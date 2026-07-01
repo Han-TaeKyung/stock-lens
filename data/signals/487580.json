@@ -1,1 +1,1 @@
-[{"code": "487580", "date": "2026-06-16", "side": "caution", "type": "disparity_ma5", "label": "이격도 과다 MA5 (110.87%)", "desc": "5일선 대비 110.87% — 과열 구간, 신규 매수 자제", "price": 4335.0}]
+[{"code": "487580", "date": "2026-06-16", "side": "caution", "type": "disparity_ma5", "label": "이격도 과다 MA5 (110.87%)", "desc": "5일선 대비 110.87% — 과열 구간, 신규 매수 자제", "price": 4335.0}, {"code": "487580", "date": "2026-07-01", "side": "buy", "type": "pullback_ma20", "label": "눌림목 매수 (20일선 반등)", "desc": "20일선(생명선) 지지 확인 — 안전한 매수 타점", "price": 3785.0}]
