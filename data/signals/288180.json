@@ -1,1 +1,1 @@
-[{"code": "288180", "date": "2026-06-12", "side": "caution", "type": "disparity_ma5", "label": "이격도 과다 MA5 (116.84%)", "desc": "5일선 대비 116.84% — 과열 구간, 신규 매수 자제", "price": 14250.0}]
+[{"code": "288180", "date": "2026-06-12", "side": "caution", "type": "disparity_ma5", "label": "이격도 과다 MA5 (116.84%)", "desc": "5일선 대비 116.84% — 과열 구간, 신규 매수 자제", "price": 14250.0}, {"code": "288180", "date": "2026-07-23", "side": "buy", "type": "rsi_oversold", "label": "RSI 과매도 탈출 (30)", "desc": "RSI 과매도 구간 탈출 — 반등 매수 타이밍", "price": 8240.0}]
