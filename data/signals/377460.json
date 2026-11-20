@@ -1,1 +1,1 @@
-[{"code": "377460", "date": "2024-05-17", "side": "buy", "type": "macd_hist_positive", "label": "MACD 오실레이터 양전환", "desc": "히스토그램 음→양 전환 — 매수 준비 타이밍", "price": 4080.0}]
+[{"code": "377460", "date": "2024-07-02", "side": "sell", "type": "macd_hist_negative", "label": "MACD 오실레이터 음전환", "desc": "히스토그램 양→음 전환 — 매도 주의", "price": 4080.0}]
